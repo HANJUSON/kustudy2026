@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스케줄링 알고리즘 성능 비교 · Big O(S) 04주차</title>
+<style>
+  :root{
+    --bg:#0d1422; --panel:#141f33; --panel2:#1a273e; --line:#26364f;
+    --ink:#eef4fd; --sub:#a3b4cf; --muted:#6e8099;
+    --fcfs:#ff7a59; --sjf:#36d399; --rr:#5b8cff;
+    --wait:#5b8cff; --turn:#b07bff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo","Segoe UI",sans-serif;
+    background:radial-gradient(1100px 560px at 15% -10%,#19243d 0%,var(--bg) 55%);
+    color:var(--ink);line-height:1.55;padding:22px;min-height:100vh;
+  }
+  .wrap{max-width:1200px;margin:0 auto}
+  header.bar{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    background:linear-gradient(90deg,#152038,#1b2a47);
+    border:1px solid var(--line);border-radius:16px;padding:16px 22px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px}
+  .logo .dot{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#36d399,#5b8cff);
+    display:grid;place-items:center;font-size:13px;color:#06101f;font-weight:900}
+  .crumbs{display:flex;gap:10px;align-items:center;color:var(--sub);font-size:13.5px;flex-wrap:wrap}
+  .crumbs b{color:var(--ink)}
+  .chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12.5px;color:var(--sub)}
+  .spacer{flex:1}
+  h1.sub{font-size:14px;color:var(--sub);font-weight:600;margin:20px 2px 10px;display:flex;align-items:center;gap:8px}
+  h1.sub::before{content:"";width:4px;height:15px;border-radius:2px;background:linear-gradient(var(--sjf),var(--rr))}
+
+  .grid{display:grid;gap:16px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px}
+
+  /* ---- bar chart ---- */
+  .chart-grid{grid-template-columns:1fr 1fr}
+  .legend{display:flex;gap:16px;margin-bottom:14px;font-size:12.5px;color:var(--sub)}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+  .chart-title{font-weight:800;font-size:15px;margin-bottom:4px}
+  .chart-sub{font-size:12px;color:var(--muted);margin-bottom:14px}
+  .bars{display:flex;align-items:flex-end;justify-content:space-around;height:240px;
+    border-bottom:2px solid var(--line);position:relative;padding:0 6px}
+  .gridline{position:absolute;left:0;right:0;border-top:1px dashed rgba(255,255,255,.06);font-size:10px;color:var(--muted)}
+  .gridline span{position:absolute;left:-2px;top:-14px}
+  .barGroup{display:flex;flex-direction:column;align-items:center;gap:7px;width:30%;z-index:2}
+  .pair{display:flex;align-items:flex-end;gap:9px;height:200px}
+  .bar{width:34px;border-radius:7px 7px 0 0;position:relative;display:flex;align-items:flex-start;justify-content:center;
+    transition:height 1s cubic-bezier(.2,.75,.2,1)}
+  .bar.w{background:linear-gradient(180deg,#7ea3ff,var(--wait))}
+  .bar.t{background:linear-gradient(180deg,#c79bff,var(--turn))}
+  .bar .val{position:absolute;top:-19px;font-size:11.5px;font-weight:800;color:var(--ink);white-space:nowrap}
+  .barGroup .name{font-weight:800;font-size:13.5px}
+  .barGroup .tagdot{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:6px;vertical-align:0}
+  .best-flag{font-size:10.5px;color:#06101f;background:var(--sjf);padding:2px 8px;border-radius:999px;font-weight:800;margin-top:2px}
+
+  /* horizontal ranking bars */
+  .hbars{display:flex;flex-direction:column;gap:16px}
+  .hrow{display:grid;grid-template-columns:74px 1fr 56px;align-items:center;gap:10px}
+  .hrow .hl{font-weight:800;font-size:13px;display:flex;align-items:center;gap:6px}
+  .htrack{height:22px;background:var(--panel2);border-radius:7px;overflow:hidden;border:1px solid var(--line)}
+  .hfill{height:100%;border-radius:7px;transition:width 1s cubic-bezier(.2,.75,.2,1);
+    display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;font-weight:800;color:#06101f}
+  .hval{text-align:right;font-weight:800;font-size:13px}
+
+  /* feature cards */
+  .feat-grid{grid-template-columns:repeat(3,1fr)}
+  .feat{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:14px;padding:18px;border-top:3px solid var(--line);position:relative}
+  .feat.fcfs{border-top-color:var(--fcfs)} .feat.sjf{border-top-color:var(--sjf)} .feat.rr{border-top-color:var(--rr)}
+  .feat .fh{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .feat .fh .ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-weight:900;font-size:13px;color:#06101f}
+  .feat.fcfs .ic{background:var(--fcfs)} .feat.sjf .ic{background:var(--sjf)} .feat.rr .ic{background:var(--rr)}
+  .feat .fh .ft{font-weight:800;font-size:15px}
+  .feat .fh .fe{font-size:11.5px;color:var(--muted)}
+  .feat .key{display:inline-block;font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:999px;margin:8px 0 8px}
+  .feat.fcfs .key{background:rgba(255,122,89,.15);color:var(--fcfs)}
+  .feat.sjf .key{background:rgba(54,211,153,.15);color:var(--sjf)}
+  .feat.rr .key{background:rgba(91,140,255,.15);color:var(--rr)}
+  .feat p{font-size:12.8px;color:var(--sub);margin-bottom:8px}
+  .feat ul{list-style:none;font-size:12.3px;color:var(--sub)}
+  .feat li{padding:4px 0 4px 18px;position:relative}
+  .feat li::before{content:"▹";position:absolute;left:0;color:var(--muted)}
+  .feat li b{color:var(--ink)}
+
+  /* comparison table */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:11px 12px;text-align:center;border-bottom:1px solid var(--line)}
+  th{background:var(--panel2);color:var(--sub);font-weight:700;font-size:12.5px}
+  td.lab{text-align:left;font-weight:800;color:var(--sub);background:#16223a}
+  tbody tr:hover{background:rgba(91,140,255,.05)}
+  .cell-f{color:var(--fcfs)} .cell-s{color:var(--sjf)} .cell-r{color:var(--rr)}
+  .env td{font-weight:700}
+  .tagrow td span{display:inline-block;font-size:11px;background:var(--panel2);border:1px solid var(--line);
+    padding:3px 9px;border-radius:999px;color:var(--ink)}
+
+  footer{margin-top:24px;text-align:center;color:var(--muted);font-size:12.5px;padding:14px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="bar">
+    <div class="logo"><span class="dot">OS</span>Big O(S)</div>
+    <div class="crumbs">
+      <span class="chip">04주차</span><b>·</b>
+      <b>CPU 스케줄링 알고리즘 시뮬레이션</b><b>·</b>
+      <span>2026.04.18</span>
+    </div>
+    <div class="spacer"></div>
+    <span class="chip">성능 비교 대시보드</span>
+  </header>
+
+  <h1 class="sub">평균 대기 / 반환 시간 비교 (P1~P5, q=4ms)</h1>
+  <div class="grid chart-grid">
+    <div class="panel">
+      <div class="chart-title">알고리즘별 평균 시간 (ms)</div>
+      <div class="chart-sub">막대 높이 = 시간(ms), 낮을수록 우수 · 도메인 0~16ms</div>
+      <div class="legend">
+        <span><i style="background:var(--wait)"></i>평균 대기 시간</span>
+        <span><i style="background:var(--turn)"></i>평균 반환 시간</span>
+      </div>
+      <div class="bars" id="bars"></div>
+    </div>
+
+    <div class="panel">
+      <div class="chart-title">평균 대기 시간 랭킹</div>
+      <div class="chart-sub">SJF가 4.0ms로 최소 — 이론적 최적 알고리즘</div>
+      <div class="hbars" id="hbars"></div>
+      <div style="margin-top:18px" class="chart-title">평균 반환 시간 랭킹</div>
+      <div class="hbars" id="hbars2" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <h1 class="sub">알고리즘 특징 카드</h1>
+  <div class="grid feat-grid">
+    <div class="feat fcfs">
+      <div class="fh"><span class="ic">FC</span><div><div class="ft">FCFS</div><div class="fe">First-Come, First-Served</div></div></div>
+      <span class="key">⚠ 호위 효과 (Convoy Effect)</span>
+      <p>도착 순서대로 CPU를 할당하는 <b>비선점형</b> 방식. 구현이 단순하고 직관적이다.</p>
+      <ul>
+        <li>긴 P1이 먼저 점유 → 짧은 <b>P4</b>가 실행(2ms)보다 훨씬 오래 대기</li>
+        <li>평균 대기 <b>9.4ms</b>로 세 알고리즘 중 <b>최대</b></li>
+        <li>응답 시간보다 <b>처리량</b>이 중요한 환경에 적합</li>
+      </ul>
+    </div>
+    <div class="feat sjf">
+      <div class="fh"><span class="ic">SJ</span><div><div class="ft">SJF</div><div class="fe">Shortest Job First</div></div></div>
+      <span class="key">★ 기아(Starvation) · 에이징(Aging)</span>
+      <p>버스트가 가장 짧은 프로세스를 먼저 실행. 평균 대기를 <b>이론적으로 최소화</b>하는 최적 알고리즘.</p>
+      <ul>
+        <li>평균 대기 <b>4.0ms</b> · 평균 반환 <b>10.0ms</b>로 <b>최우수</b></li>
+        <li>긴 프로세스가 무한 대기하는 <b>기아 문제</b> → 에이징으로 완화</li>
+        <li>다음 버스트는 <b>지수 평균(Exponential Averaging)</b>으로 예측</li>
+      </ul>
+    </div>
+    <div class="feat rr">
+      <div class="fh"><span class="ic">RR</span><div><div class="ft">Round Robin</div><div class="fe">Time Quantum q=4ms</div></div></div>
+      <span class="key">⏱ 타임퀀텀 · 선점형 시분할</span>
+      <p>모든 프로세스에 동일한 <b>타임퀀텀(q)</b>을 순서대로 부여하는 <b>선점형</b> 방식.</p>
+      <ul>
+        <li>응답 시간이 <b>균등</b>하고 <b>기아가 발생하지 않음</b></li>
+        <li>평균 대기 <b>7.2ms</b> · 평균 반환 <b>13.2ms</b> (FCFS·SJF의 중간)</li>
+        <li>퀀텀 크기에 따라 성능이 크게 변동 → <b>시분할 시스템</b> 표준</li>
+      </ul>
+    </div>
+  </div>
+
+  <h1 class="sub">종합 비교표 & 적합 환경</h1>
+  <div class="panel">
+    <table>
+      <thead>
+        <tr><th>비교 항목</th><th class="cell-f">FCFS</th><th class="cell-s">SJF</th><th class="cell-r">Round Robin</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="lab">방식</td><td>비선점형</td><td>비선점형</td><td>선점형</td></tr>
+        <tr><td class="lab">선택 기준</td><td>도착 순서</td><td>최단 버스트</td><td>타임퀀텀 순환</td></tr>
+        <tr><td class="lab">평균 대기 (ms)</td><td>9.4</td><td><b>4.0 ★</b></td><td>7.2</td></tr>
+        <tr><td class="lab">평균 반환 (ms)</td><td>15.4</td><td><b>10.0 ★</b></td><td>13.2</td></tr>
+        <tr><td class="lab">주요 단점</td><td>호위 효과</td><td>기아 · 버스트 예측</td><td>잦은 문맥 교환</td></tr>
+        <tr><td class="lab">보완 기법</td><td>—</td><td>에이징 · 지수 평균</td><td>퀀텀 크기 조정</td></tr>
+        <tr class="env"><td class="lab">적합 환경</td>
+          <td class="cell-f">대형 배치 처리</td><td class="cell-s">인쇄 스풀러 · 배치 스케줄러</td><td class="cell-r">시분할 · 대화형 OS</td></tr>
+        <tr class="tagrow"><td class="lab">핵심 키워드</td>
+          <td><span>처리량 중심</span></td><td><span>대기시간 최소</span></td><td><span>응답시간 균등</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>KUS-TUDY · Big O(S) 스터디 활동 증빙 자료</footer>
+</div>
+
+<script>
+const DATA=[
+  {k:"FCFS", cls:"f", color:"--fcfs", w:9.4, t:15.4, best:false},
+  {k:"SJF",  cls:"s", color:"--sjf",  w:4.0, t:10.0, best:true},
+  {k:"RR",   cls:"r", color:"--rr",   w:7.2, t:13.2, best:false}
+];
+const MAX=16; // 도메인 상한 (ms)
+
+// ---- 세로 막대 그래프 ----
+(function(){
+  const el=document.getElementById("bars");
+  // gridlines
+  for(let v=0;v<=MAX;v+=4){
+    const pct=(v/MAX)*100;
+    el.insertAdjacentHTML("beforeend",
+      `<div class="gridline" style="bottom:${pct}%"><span>${v}</span></div>`);
+  }
+  DATA.forEach(d=>{
+    const hw=(d.w/MAX*200), ht=(d.t/MAX*200);
+    el.insertAdjacentHTML("beforeend",
+      `<div class="barGroup">
+        <div class="pair">
+          <div class="bar w" data-h="${hw}" style="height:0"><span class="val">${d.w.toFixed(1)}</span></div>
+          <div class="bar t" data-h="${ht}" style="height:0"><span class="val">${d.t.toFixed(1)}</span></div>
+        </div>
+        <div class="name"><span class="tagdot" style="background:var(${d.color})"></span>${d.k}</div>
+        ${d.best?'<div class="best-flag">최적 ★</div>':''}
+      </div>`);
+  });
+  requestAnimationFrame(()=>{
+    document.querySelectorAll("#bars .bar").forEach(b=>{ b.style.height=b.dataset.h+"px"; });
+  });
+})();
+
+// ---- 가로 랭킹 막대 ----
+function hbar(targetId, metric){
+  const el=document.getElementById(targetId);
+  const rows=[...DATA].sort((a,b)=>a[metric]-b[metric]);
+  const max=Math.max(...DATA.map(d=>d[metric]));
+  rows.forEach(d=>{
+    const pct=(d[metric]/max)*100;
+    el.insertAdjacentHTML("beforeend",
+      `<div class="hrow">
+        <div class="hl"><span style="width:9px;height:9px;border-radius:2px;background:var(${d.color});display:inline-block"></span>${d.k}</div>
+        <div class="htrack"><div class="hfill" data-w="${pct}" style="width:0;background:linear-gradient(90deg,var(${d.color}),#fff2)">${d.best?'★':''}</div></div>
+        <div class="hval">${d[metric].toFixed(1)}ms</div>
+      </div>`);
+  });
+  requestAnimationFrame(()=>{
+    el.querySelectorAll(".hfill").forEach(f=>f.style.width=f.dataset.w+"%");
+  });
+}
+hbar("hbars","w");
+hbar("hbars2","t");
+</script>
+</body>
+</html>

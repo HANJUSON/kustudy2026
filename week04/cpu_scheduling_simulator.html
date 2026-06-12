@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CPU 스케줄링 시뮬레이터 · Big O(S) 04주차</title>
+<style>
+  :root{
+    --bg:#0e1726; --panel:#152136; --panel2:#1b2940; --line:#27374f;
+    --ink:#eaf1fb; --sub:#9fb2cd; --muted:#6f829e;
+    --fcfs:#ff7a59; --sjf:#36d399; --rr:#5b8cff;
+    --p1:#ff7a59; --p2:#ffd24c; --p3:#36d399; --p4:#5b8cff; --p5:#b07bff;
+    --accent:#5b8cff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo","Segoe UI",sans-serif;
+    background:radial-gradient(1200px 600px at 80% -10%,#1a2640 0%,var(--bg) 55%);
+    color:var(--ink); line-height:1.5; padding:22px; min-height:100vh;
+  }
+  .wrap{max-width:1240px;margin:0 auto}
+  header.bar{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    background:linear-gradient(90deg,#16233c,#1c2c49);
+    border:1px solid var(--line);border-radius:16px;padding:16px 22px;
+    box-shadow:0 8px 30px rgba(0,0,0,.35);
+  }
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:.3px}
+  .logo .dot{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#5b8cff,#36d399);
+    display:grid;place-items:center;font-size:14px;color:#06101f;font-weight:900}
+  .crumbs{display:flex;gap:10px;align-items:center;color:var(--sub);font-size:13.5px;flex-wrap:wrap}
+  .crumbs b{color:var(--ink)}
+  .chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12.5px;color:var(--sub)}
+  .spacer{flex:1}
+  h1.sub{font-size:14px;color:var(--sub);font-weight:600;margin:18px 2px 10px}
+
+  .grid{display:grid;gap:16px}
+  .kpis{grid-template-columns:repeat(3,1fr);margin-top:16px}
+  .kpi{
+    background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:14px;padding:16px 18px;position:relative;overflow:hidden
+  }
+  .kpi::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.03));pointer-events:none}
+  .kpi .tag{font-size:12.5px;font-weight:700;letter-spacing:.4px;display:inline-flex;align-items:center;gap:7px}
+  .kpi .swatch{width:11px;height:11px;border-radius:3px}
+  .kpi .big{font-size:30px;font-weight:800;margin-top:8px}
+  .kpi .big small{font-size:14px;color:var(--muted);font-weight:600}
+  .kpi .row2{display:flex;gap:18px;margin-top:6px;color:var(--sub);font-size:13px}
+  .kpi .row2 span b{color:var(--ink)}
+  .kpi.best{outline:2px solid rgba(54,211,153,.55)}
+  .kpi .crown{position:absolute;top:12px;right:14px;font-size:11px;color:#06101f;background:var(--sjf);
+    padding:3px 9px;border-radius:999px;font-weight:800}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+  .tabs{display:flex;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+  .tab{cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--sub);
+    padding:8px 16px;border-radius:10px;font-size:13.5px;font-weight:700;transition:.15s}
+  .tab:hover{color:var(--ink)}
+  .tab.active{color:#06101f;border-color:transparent}
+  .tab[data-k="FCFS"].active{background:var(--fcfs)}
+  .tab[data-k="SJF"].active{background:var(--sjf)}
+  .tab[data-k="RR"].active{background:var(--rr)}
+  .tab.allbtn.active{background:linear-gradient(90deg,var(--fcfs),var(--sjf),var(--rr));color:#06101f}
+
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 2px;color:var(--sub);font-size:12.5px}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+  .gantt-block{margin-top:14px;padding:14px 16px;background:var(--panel2);border:1px solid var(--line);border-radius:13px}
+  .gantt-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .gantt-head .name{font-weight:800;font-size:15px}
+  .gantt-head .pill{font-size:11.5px;color:var(--sub);border:1px solid var(--line);padding:3px 9px;border-radius:999px}
+  .gantt-head .res{margin-left:auto;font-size:12.5px;color:var(--sub)}
+  .gantt-head .res b{color:var(--ink)}
+  .timeline{position:relative;height:46px;border-radius:8px;overflow:hidden;display:flex}
+  .seg{position:relative;display:flex;align-items:center;justify-content:center;color:#0a1422;font-weight:800;font-size:13px;
+    border-right:2px solid var(--panel2);transition:width .6s cubic-bezier(.2,.7,.2,1)}
+  .seg span.idle{color:var(--muted)}
+  .axis{display:flex;position:relative;height:18px;margin-top:3px}
+  .tick{position:absolute;transform:translateX(-50%);font-size:10.5px;color:var(--muted)}
+  .seg.p1{background:var(--p1)} .seg.p2{background:var(--p2)} .seg.p3{background:var(--p3)}
+  .seg.p4{background:var(--p4)} .seg.p5{background:var(--p5)} .seg.idle{background:#22324c}
+
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
+  th,td{padding:9px 10px;text-align:center;border-bottom:1px solid var(--line)}
+  th{color:var(--sub);font-weight:700;background:var(--panel2);font-size:12.5px}
+  tbody tr:hover{background:rgba(91,140,255,.06)}
+  td.pname{font-weight:800;text-align:left}
+  td .dotp{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+  tfoot td{font-weight:800;color:var(--ink);background:#16233c;border-top:2px solid var(--line)}
+  .twocol{grid-template-columns:1.15fr .85fr}
+  .note{font-size:12.5px;color:var(--sub);margin-top:10px;padding:10px 12px;border-left:3px solid var(--accent);
+    background:rgba(91,140,255,.07);border-radius:0 8px 8px 0}
+  .note b{color:var(--ink)}
+  .inputs{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .inputs .pcard{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:96px}
+  .inputs .pcard .h{font-weight:800;font-size:13px;display:flex;align-items:center;gap:6px}
+  .inputs .pcard .h i{width:10px;height:10px;border-radius:3px;display:inline-block}
+  .inputs .pcard .v{font-size:11.5px;color:var(--sub);margin-top:3px}
+  footer{margin-top:22px;text-align:center;color:var(--muted);font-size:12.5px;padding:14px;border-top:1px solid var(--line)}
+  .qbox{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--sub);margin-left:6px}
+  .qbox b{color:var(--rr)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="bar">
+    <div class="logo"><span class="dot">OS</span>Big O(S)</div>
+    <div class="crumbs">
+      <span class="chip">04주차</span><b>·</b>
+      <b>CPU 스케줄링 알고리즘 시뮬레이션</b><b>·</b>
+      <span>2026.04.18</span>
+    </div>
+    <div class="spacer"></div>
+    <span class="chip">FCFS · SJF · Round Robin</span>
+  </header>
+
+  <h1 class="sub">입력 프로세스 집합 (도착 시간 / CPU 버스트, 단위 ms)</h1>
+  <div class="inputs" id="inputs"></div>
+
+  <div class="grid kpis" id="kpis"></div>
+
+  <h1 class="sub">알고리즘별 Gantt 차트</h1>
+  <div class="panel">
+    <div class="tabs" id="tabs">
+      <div class="tab allbtn active" data-k="ALL">전체 보기</div>
+      <div class="tab" data-k="FCFS">FCFS</div>
+      <div class="tab" data-k="SJF">SJF</div>
+      <div class="tab" data-k="RR">Round Robin (q=4)</div>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div id="gantts"></div>
+  </div>
+
+  <h1 class="sub">프로세스별 대기 / 반환 시간 상세</h1>
+  <div class="grid twocol">
+    <div class="panel">
+      <div class="gantt-head"><span class="name" id="detailTitle">FCFS 상세표</span>
+        <span class="pill" id="detailPill">비선점형 · 도착 순서</span></div>
+      <table id="detailTable"></table>
+    </div>
+    <div class="panel">
+      <div class="gantt-head"><span class="name">보고서 종합 결과</span><span class="pill">평균 지표 (ms)</span></div>
+      <table id="summary"></table>
+      <div class="note" id="summaryNote"></div>
+    </div>
+  </div>
+
+  <footer>KUS-TUDY · Big O(S) 스터디 활동 증빙 자료</footer>
+</div>
+
+<script>
+const COLOR={P1:"p1",P2:"p2",P3:"p3",P4:"p4",P5:"p5"};
+const ORDER=["P1","P2","P3","P4","P5"];
+const PROC={ // 도착, 버스트
+  P1:{a:0,b:10}, P2:{a:1,b:4}, P3:{a:2,b:6}, P4:{a:3,b:2}, P5:{a:4,b:8}
+};
+// 보고서 공식 평균 (반드시 일치)
+const REPORT={
+  FCFS:{w:9.4,t:15.4}, SJF:{w:4.0,t:10.0}, RR:{w:7.2,t:13.2}
+};
+// 캔버스(타임라인) — 입력에 대한 표준 스케줄
+const SCHED={
+  FCFS:{
+    label:"FCFS", color:"--fcfs", desc:"비선점형 · 도착 순서",
+    gantt:[["P1",0,10],["P2",10,14],["P3",14,20],["P4",20,22],["P5",22,30]],
+    rows:{P1:[0,10],P2:[9,13],P3:[12,18],P4:[17,19],P5:[18,26]}
+  },
+  SJF:{
+    label:"SJF", color:"--sjf", desc:"비선점형 · 최단 작업 우선",
+    gantt:[["P1",0,10],["P4",10,12],["P2",12,16],["P3",16,22],["P5",22,30]],
+    rows:{P1:[0,10],P4:[7,9],P2:[11,15],P3:[14,20],P5:[18,26]}
+  },
+  RR:{
+    label:"Round Robin (q=4)", color:"--rr", desc:"선점형 · 타임퀀텀 q=4ms",
+    gantt:[["P1",0,4],["P2",4,8],["P3",8,12],["P4",12,14],["P5",14,18],["P1",18,22],["P3",22,24],["P5",24,28],["P1",28,30]],
+    rows:{P1:[20,30],P2:[3,7],P3:[16,22],P4:[9,11],P5:[16,24]}
+  }
+};
+const TOTAL=30;
+
+// ---- 입력 카드 ----
+(function(){
+  const el=document.getElementById("inputs");
+  ORDER.forEach(p=>{
+    const c=getComputedStyle(document.documentElement).getPropertyValue("--"+COLOR[p].replace("p","p"));
+    el.insertAdjacentHTML("beforeend",
+      `<div class="pcard"><div class="h"><i style="background:var(--${COLOR[p]})"></i>${p}</div>
+       <div class="v">도착 ${PROC[p].a}ms · 버스트 ${PROC[p].b}ms</div></div>`);
+  });
+})();
+
+// ---- KPI 카드 ----
+(function(){
+  const el=document.getElementById("kpis");
+  const meta={FCFS:{c:"--fcfs",d:"호위 효과 발생 · 처리량 중심"},
+              SJF:{c:"--sjf",d:"평균 대기 최소 (최적) · 기아 주의"},
+              RR:{c:"--rr",d:"응답 시간 균등 · 시분할 적합"}};
+  ["FCFS","SJF","RR"].forEach(k=>{
+    const r=REPORT[k], best=(k==="SJF");
+    el.insertAdjacentHTML("beforeend",
+      `<div class="kpi ${best?'best':''}">
+        ${best?'<span class="crown">최적 ★</span>':''}
+        <div class="tag"><span class="swatch" style="background:var(${meta[k].c})"></span>${SCHED[k].label}</div>
+        <div class="big">${r.w.toFixed(1)}<small> ms · 평균 대기</small></div>
+        <div class="row2">
+          <span>평균 반환 <b>${r.t.toFixed(1)} ms</b></span>
+          <span>턴어라운드 차 <b>+6.0</b></span>
+        </div>
+        <div class="row2"><span style="color:var(--muted)">${meta[k].d}</span></div>
+      </div>`);
+  });
+})();
+
+// ---- Legend ----
+(function(){
+  const el=document.getElementById("legend");
+  ORDER.forEach(p=>el.insertAdjacentHTML("beforeend",
+    `<span><i style="background:var(--${COLOR[p]})"></i>${p} (버스트 ${PROC[p].b}ms)</span>`));
+  el.insertAdjacentHTML("beforeend",`<span><i style="background:#22324c"></i>유휴(Idle)</span>`);
+})();
+
+// ---- Gantt 렌더 ----
+function ganttHTML(k){
+  const s=SCHED[k], r=REPORT[k];
+  let segs="";
+  let cursor=0;
+  s.gantt.forEach(([p,st,en])=>{
+    if(st>cursor){ // idle gap
+      const w=((st-cursor)/TOTAL*100);
+      segs+=`<div class="seg idle" style="width:${w}%"><span class="idle">idle</span></div>`;
+    }
+    const w=((en-st)/TOTAL*100);
+    segs+=`<div class="seg ${COLOR[p]}" style="width:${w}%">${p}</div>`;
+    cursor=en;
+  });
+  // axis ticks
+  let ticks="";
+  for(let t=0;t<=TOTAL;t+=2){
+    ticks+=`<span class="tick" style="left:${t/TOTAL*100}%">${t}</span>`;
+  }
+  return `<div class="gantt-block" data-algo="${k}">
+    <div class="gantt-head">
+      <span class="name" style="color:var(${s.color})">${s.label}</span>
+      <span class="pill">${s.desc}</span>
+      <span class="res">평균 대기 <b>${r.w.toFixed(1)}ms</b> · 평균 반환 <b>${r.t.toFixed(1)}ms</b></span>
+    </div>
+    <div class="timeline">${segs}</div>
+    <div class="axis">${ticks}</div>
+  </div>`;
+}
+function renderGantts(view){
+  const el=document.getElementById("gantts");
+  const keys = view==="ALL"?["FCFS","SJF","RR"]:[view];
+  el.innerHTML=keys.map(ganttHTML).join("");
+  // animate widths in
+  requestAnimationFrame(()=>{ /* CSS transition triggers on layout */ });
+}
+
+// ---- 상세표 ----
+function renderDetail(k){
+  const s=SCHED[k], r=REPORT[k];
+  document.getElementById("detailTitle").textContent=s.label+" 상세표";
+  document.getElementById("detailPill").textContent=s.desc;
+  let body="";
+  // keep original P-order rows
+  ORDER.forEach(p=>{
+    const [w,t]=s.rows[p];
+    body+=`<tr>
+      <td class="pname"><span class="dotp" style="background:var(--${COLOR[p]})"></span>${p}</td>
+      <td>${PROC[p].a}</td><td>${PROC[p].b}</td><td>${w}</td><td>${t}</td></tr>`;
+  });
+  document.getElementById("detailTable").innerHTML=
+    `<thead><tr><th>프로세스</th><th>도착</th><th>버스트</th><th>대기(ms)</th><th>반환(ms)</th></tr></thead>
+     <tbody>${body}</tbody>
+     <tfoot><tr><td colspan="3">보고서 평균</td><td>${r.w.toFixed(1)}</td><td>${r.t.toFixed(1)}</td></tr></tfoot>`;
+}
+
+// ---- 종합표 ----
+(function(){
+  let body="";
+  ["FCFS","SJF","RR"].forEach(k=>{
+    const r=REPORT[k], best=(k==="SJF");
+    body+=`<tr ${best?'style="background:rgba(54,211,153,.1)"':''}>
+      <td class="pname">${SCHED[k].label}${best?' <span style="color:var(--sjf);font-weight:800">★</span>':''}</td>
+      <td>${r.w.toFixed(1)}</td><td>${r.t.toFixed(1)}</td></tr>`;
+  });
+  document.getElementById("summary").innerHTML=
+    `<thead><tr><th>알고리즘</th><th>평균 대기(ms)</th><th>평균 반환(ms)</th></tr></thead><tbody>${body}</tbody>`;
+  document.getElementById("summaryNote").innerHTML=
+    `<b>SJF</b>가 평균 대기 <b>4.0ms</b>로 세 알고리즘 중 최소 — 이론적 최적.
+     FCFS는 긴 P1이 먼저 점유해 <b>호위 효과(Convoy Effect)</b>로 9.4ms까지 증가하며,
+     RR(q=4)은 7.2ms로 둘 사이의 균형점이다.`;
+})();
+
+// ---- 탭 ----
+document.getElementById("tabs").addEventListener("click",e=>{
+  const t=e.target.closest(".tab"); if(!t)return;
+  document.querySelectorAll("#tabs .tab").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");
+  const k=t.dataset.k;
+  renderGantts(k);
+  renderDetail(k==="ALL"?"FCFS":k);
+});
+
+// ---- 기본 렌더 (로드 즉시 전체 표시) ----
+renderGantts("ALL");
+renderDetail("FCFS");
+</script>
+</body>
+</html>

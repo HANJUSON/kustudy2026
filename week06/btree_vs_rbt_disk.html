@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Big O(S) · 6주차 · B-트리 vs RBT 디스크 비교</title>
+<style>
+  :root{
+    --bg:#0c1322; --panel:#141d31; --panel2:#1b2742; --line:#2a3a5e;
+    --ink:#eaf0fb; --sub:#94a5c6; --accent:#5b8cff; --teal:#36d3b0;
+    --amber:#ffb454; --rose:#ff5d6c; --gold:#ffd35a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:radial-gradient(1200px 600px at 20% -10%,#16223f,#0a1120 60%);
+    color:var(--ink);font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;}
+  header.bar{display:flex;align-items:center;gap:14px;padding:14px 26px;
+    background:linear-gradient(90deg,#141f3c,#1f2e57);border-bottom:2px solid var(--teal);
+    box-shadow:0 4px 24px rgba(0,0,0,.45);}
+  .logo{font-weight:800;font-size:20px;
+    background:linear-gradient(90deg,#36d3b0,#5b8cff);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .crumbs{display:flex;gap:10px;align-items:center;color:var(--sub);font-size:14px;flex-wrap:wrap;}
+  .crumbs b{color:var(--ink);}
+  .pill{background:#21315a;border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-size:13px;color:var(--teal);}
+  .wrap{max-width:1280px;margin:0 auto;padding:22px 26px 60px;}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;
+    box-shadow:0 8px 28px rgba(0,0,0,.3);}
+  .card h2{margin:0 0 4px;font-size:16px;}
+  .card .desc{color:var(--sub);font-size:12.5px;margin:0 0 10px;line-height:1.5;}
+  .s2{grid-column:span 2;} .s3{grid-column:span 3;} .s4{grid-column:span 4;}
+  .tag{font-size:12px;color:var(--sub);font-weight:500;}
+  svg{display:block;width:100%;height:auto;}
+  /* KPI tiles */
+  .kpi{display:flex;flex-direction:column;justify-content:center;align-items:center;
+    background:linear-gradient(150deg,var(--panel2),#15203a);border:1px solid var(--line);
+    border-radius:16px;padding:18px 12px;text-align:center;}
+  .kpi .big{font-size:38px;font-weight:800;line-height:1;}
+  .kpi .unit{font-size:14px;color:var(--sub);margin-top:6px;}
+  .kpi .lbl{font-size:12px;color:var(--sub);margin-top:10px;line-height:1.4;}
+  .kpi.rose .big{color:var(--rose);} .kpi.teal .big{color:var(--teal);}
+  .kpi.amber .big{color:var(--amber);} .kpi.gold .big{color:var(--gold);}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:8px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dot{width:13px;height:13px;border-radius:3px;display:inline-block;}
+  .axislbl{fill:var(--sub);font:600 12px system-ui;}
+  table.cmp{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px;}
+  table.cmp th,table.cmp td{padding:9px 10px;border-bottom:1px solid #243352;text-align:center;}
+  table.cmp th{color:var(--sub);font-weight:700;background:#16203a;}
+  table.cmp td:first-child{text-align:left;color:var(--sub);}
+  table.cmp .rbt{color:#ff9aa3;font-weight:700;}
+  table.cmp .btr{color:#7ce6cf;font-weight:700;}
+  .note{font-size:12px;color:var(--sub);line-height:1.6;margin-top:8px;}
+  .note b{color:var(--gold);}
+  .keyblk{fill:#21315a;stroke:#4a6299;stroke-width:1.6;}
+  .keytxt{font:700 13px Consolas,monospace;fill:#eaf0fb;}
+  .ptr{fill:#36d3b0;}
+  .ptrline{stroke:#36d3b0;stroke-width:2;stroke-dasharray:3 3;}
+  footer{text-align:center;color:var(--sub);font-size:12.5px;padding:20px;border-top:1px solid var(--line);margin-top:14px;}
+  .ratio-bar{height:26px;border-radius:7px;background:#16203a;border:1px solid var(--line);overflow:hidden;position:relative;margin-top:6px;}
+  .ratio-fill{height:100%;background:linear-gradient(90deg,#ff5d6c,#ffb454);display:flex;align-items:center;
+    justify-content:flex-end;padding-right:10px;font-size:12px;font-weight:700;color:#3a1414;}
+</style>
+</head>
+<body>
+<header class="bar">
+  <span class="logo">Big O(S)</span>
+  <div class="crumbs">
+    <span class="pill">06주차</span>
+    <b>탐색 트리 완전정복 — B-트리 vs RBT 디스크 접근 비교</b>
+    <span>·</span><span>2026.05.03</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- KPI row -->
+  <div class="grid" style="margin-bottom:18px;">
+    <div class="kpi rose"><div class="big">~30</div><div class="unit">디스크 접근</div>
+      <div class="lbl">10억 노드 RBT 높이</div></div>
+    <div class="kpi rose"><div class="big">~150<span style="font-size:18px;">ms</span></div><div class="unit">총 탐색 시간</div>
+      <div class="lbl">30회 × HDD 접근(≈5ms)</div></div>
+    <div class="kpi teal"><div class="big">3</div><div class="unit">디스크 접근</div>
+      <div class="lbl">차수 1000 B-트리 높이</div></div>
+    <div class="kpi gold"><div class="big">50,000<span style="font-size:18px;">×</span></div><div class="unit">속도 격차</div>
+      <div class="lbl">디스크(HDD)가 메모리보다 느림</div></div>
+  </div>
+
+  <div class="grid">
+
+    <!-- 높이 비교 막대 -->
+    <div class="card s2">
+      <h2>트리 높이 비교 <span class="tag">— 10억(10⁹) 키 저장 기준</span></h2>
+      <p class="desc">트리의 높이 = 디스크 접근 횟수. RBT는 노드당 키 1개라 높이가 ~30까지 치솟지만, B-트리는 노드당 수백 키를 담아 높이 3으로 끝난다.</p>
+      <svg viewBox="0 0 560 280" role="img" aria-label="높이 비교 막대그래프">
+        <g stroke="#22304e" stroke-width="1">
+          <line x1="120" y1="30" x2="540" y2="30"/>
+          <line x1="120" y1="80" x2="540" y2="80"/>
+          <line x1="120" y1="130" x2="540" y2="130"/>
+          <line x1="120" y1="180" x2="540" y2="180"/>
+          <line x1="120" y1="230" x2="540" y2="230"/>
+        </g>
+        <line x1="120" y1="30" x2="120" y2="230" stroke="#2c3a5c" stroke-width="1.5"/>
+        <g class="axislbl" text-anchor="end">
+          <text x="112" y="234">0</text><text x="112" y="184">10</text>
+          <text x="112" y="134">20</text><text x="112" y="84">30</text>
+        </g>
+        <!-- RBT bar h~30 (30 -> y from 230 up 200px) -->
+        <rect x="200" y="30" width="110" height="200" rx="7" fill="url(#gr)"/>
+        <text x="255" y="22" text-anchor="middle" class="axislbl" fill="#ff9aa3" font-weight="800" font-size="14">높이 ~30</text>
+        <text x="255" y="250" text-anchor="middle" class="axislbl">RBT</text>
+        <text x="255" y="268" text-anchor="middle" class="axislbl" font-size="11">노드당 키 1개</text>
+        <!-- B-tree bar h=3 -->
+        <rect x="380" y="210" width="110" height="20" rx="7" fill="#36d3b0"/>
+        <text x="435" y="202" text-anchor="middle" class="axislbl" fill="#7ce6cf" font-weight="800" font-size="14">높이 3</text>
+        <text x="435" y="250" text-anchor="middle" class="axislbl">B-트리(차수 1000)</text>
+        <text x="435" y="268" text-anchor="middle" class="axislbl" font-size="11">노드당 키 수백~수천</text>
+        <defs>
+          <linearGradient id="gr" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ff5d6c"/><stop offset="1" stop-color="#a8323d"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="legend">
+        <span><i class="dot" style="background:#ff5d6c;"></i>RBT — 디스크 접근 ~30회 ≈ 150ms</span>
+        <span><i class="dot" style="background:#36d3b0;"></i>B-트리 — 디스크 접근 3회</span>
+      </div>
+    </div>
+
+    <!-- 디스크 vs 메모리 50000x -->
+    <div class="card s2">
+      <h2>디스크 I/O 병목 <span class="tag">— 메모리 대비 약 50,000배 느림</span></h2>
+      <p class="desc">데이터가 주기억장치를 초과해 디스크에 저장되면 HDD는 메모리 대비 약 <b style="color:var(--gold)">50,000배</b> 느리다. 그래서 "접근 횟수(높이)"를 줄이는 것이 곧 성능이다.</p>
+      <svg viewBox="0 0 560 170" role="img" aria-label="메모리 vs 디스크 접근 시간">
+        <text x="20" y="44" class="axislbl" fill="#cbd6ef" font-weight="700">메모리</text>
+        <rect x="120" y="30" width="14" height="24" rx="3" fill="#5b8cff"/>
+        <text x="146" y="48" class="axislbl">≈ 100 ns (기준 1)</text>
+        <text x="20" y="118" class="axislbl" fill="#cbd6ef" font-weight="700">디스크</text>
+        <rect x="120" y="104" width="420" height="24" rx="3" fill="url(#gr2)"/>
+        <text x="120" y="152" class="axislbl">≈ 5 ms (메모리의 약 50,000배)</text>
+        <defs>
+          <linearGradient id="gr2" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#ffb454"/><stop offset="1" stop-color="#ff5d6c"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="ratio-bar"><div class="ratio-fill" id="ratioFill" style="width:100%;">디스크 / 메모리 = 50,000×</div></div>
+      <p class="note"><b>설계 목표:</b> 노드 내부 탐색(키 수백 개 비교)은 빠른 CPU 연산으로 처리하고, 느린 디스크 접근 횟수 = 트리 높이를 최소화한다.</p>
+    </div>
+
+    <!-- B-tree node = disk block diagram -->
+    <div class="card s4">
+      <h2>B-트리 노드 = 디스크 블록(약 4KB) <span class="tag">— 한 번의 디스크 읽기로 수백 개 키를 적재</span></h2>
+      <p class="desc">각 노드를 하나의 디스크 블록(약 4KB)에 대응시켜, 1회 디스크 읽기에서 수백 개의 키와 자식 포인터를 통째로 메모리로 가져온다. 레벨당 디스크 읽기 1회 → 높이 3이면 10억 키도 3회 읽기로 도달.</p>
+      <svg viewBox="0 0 1180 320" role="img" aria-label="B-트리 노드 구조 다이어그램">
+        <!-- Level 0: root block -->
+        <g>
+          <rect x="430" y="20" width="320" height="46" rx="6" fill="#16203a" stroke="#36d3b0" stroke-width="2"/>
+          <!-- key cells -->
+          <rect class="keyblk" x="455" y="29" width="44" height="28" rx="4"/><text class="keytxt" x="477" y="48" text-anchor="middle">300</text>
+          <rect class="keyblk" x="545" y="29" width="44" height="28" rx="4"/><text class="keytxt" x="567" y="48" text-anchor="middle">600</text>
+          <rect class="keyblk" x="635" y="29" width="44" height="28" rx="4"/><text class="keytxt" x="657" y="48" text-anchor="middle">···</text>
+          <!-- child pointer dots -->
+          <circle class="ptr" cx="447" cy="43" r="5"/><circle class="ptr" cx="522" cy="43" r="5"/>
+          <circle class="ptr" cx="612" cy="43" r="5"/><circle class="ptr" cx="702" cy="43" r="5"/>
+          <text x="590" y="14" text-anchor="middle" class="axislbl" fill="#7ce6cf" font-weight="700">루트 노드 — 디스크 블록 #1 (4KB · 키 최대 ~999개)</text>
+        </g>
+        <!-- pointer lines to level 1 -->
+        <line class="ptrline" x1="447" y1="48" x2="190" y2="120"/>
+        <line class="ptrline" x1="522" y1="48" x2="470" y2="120"/>
+        <line class="ptrline" x1="612" y1="48" x2="710" y2="120"/>
+        <line class="ptrline" x1="702" y1="48" x2="990" y2="120"/>
+        <!-- Level 1: three blocks -->
+        <g>
+          <rect x="80" y="124" width="270" height="44" rx="6" fill="#16203a" stroke="#4a6299" stroke-width="1.6"/>
+          <rect class="keyblk" x="100" y="132" width="40" height="28" rx="4"/><text class="keytxt" x="120" y="151" text-anchor="middle">10</text>
+          <rect class="keyblk" x="180" y="132" width="40" height="28" rx="4"/><text class="keytxt" x="200" y="151" text-anchor="middle">120</text>
+          <rect class="keyblk" x="260" y="132" width="40" height="28" rx="4"/><text class="keytxt" x="280" y="151" text-anchor="middle">···</text>
+          <text x="215" y="184" text-anchor="middle" class="axislbl" font-size="11">디스크 블록 #2</text>
+        </g>
+        <g>
+          <rect x="380" y="124" width="270" height="44" rx="6" fill="#16203a" stroke="#4a6299" stroke-width="1.6"/>
+          <rect class="keyblk" x="400" y="132" width="40" height="28" rx="4"/><text class="keytxt" x="420" y="151" text-anchor="middle">330</text>
+          <rect class="keyblk" x="480" y="132" width="40" height="28" rx="4"/><text class="keytxt" x="500" y="151" text-anchor="middle">450</text>
+          <rect class="keyblk" x="560" y="132" width="40" height="28" rx="4"/><text class="keytxt" x="580" y="151" text-anchor="middle">···</text>
+          <text x="515" y="184" text-anchor="middle" class="axislbl" font-size="11">디스크 블록 #3</text>
+        </g>
+        <g>
+          <rect x="680" y="124" width="270" height="44" rx="6" fill="#16203a" stroke="#4a6299" stroke-width="1.6"/>
+          <rect class="keyblk" x="700" y="132" width="40" height="28" rx="4"/><text class="keytxt" x="720" y="151" text-anchor="middle">620</text>
+          <rect class="keyblk" x="780" y="132" width="40" height="28" rx="4"/><text class="keytxt" x="800" y="151" text-anchor="middle">800</text>
+          <rect class="keyblk" x="860" y="132" width="40" height="28" rx="4"/><text class="keytxt" x="880" y="151" text-anchor="middle">···</text>
+          <text x="815" y="184" text-anchor="middle" class="axislbl" font-size="11">디스크 블록 #4</text>
+        </g>
+        <!-- pointer to leaf level -->
+        <line class="ptrline" x1="200" y1="160" x2="200" y2="220"/>
+        <line class="ptrline" x1="500" y1="160" x2="500" y2="220"/>
+        <line class="ptrline" x1="800" y1="160" x2="800" y2="220"/>
+        <!-- Level 2: leaf blocks -->
+        <g>
+          <rect x="90" y="224" width="220" height="40" rx="6" fill="#10182c" stroke="#324a73" stroke-width="1.4"/>
+          <text class="keytxt" x="200" y="249" text-anchor="middle" fill="#9fb4dd">리프 · 키 다수</text>
+        </g>
+        <g>
+          <rect x="390" y="224" width="220" height="40" rx="6" fill="#10182c" stroke="#324a73" stroke-width="1.4"/>
+          <text class="keytxt" x="500" y="249" text-anchor="middle" fill="#9fb4dd">리프 · 키 다수</text>
+        </g>
+        <g>
+          <rect x="690" y="224" width="220" height="40" rx="6" fill="#10182c" stroke="#324a73" stroke-width="1.4"/>
+          <text class="keytxt" x="800" y="249" text-anchor="middle" fill="#9fb4dd">리프 · 키 다수</text>
+        </g>
+        <!-- height annotation -->
+        <g class="axislbl" text-anchor="start">
+          <text x="985" y="48">레벨 0 — 디스크 읽기 1회</text>
+          <text x="985" y="150">레벨 1 — 디스크 읽기 2회</text>
+          <text x="985" y="250">레벨 2 — 디스크 읽기 3회</text>
+          <text x="985" y="290" fill="#7ce6cf" font-weight="800">→ 높이 3, 10억+ 키</text>
+        </g>
+      </svg>
+      <div class="legend">
+        <span><i class="dot" style="background:#21315a;border:1px solid #4a6299;"></i>키(key) — CPU로 빠르게 비교</span>
+        <span><i class="dot" style="background:#36d3b0;border-radius:50%;"></i>자식 포인터 — 다음 디스크 블록 주소</span>
+      </div>
+    </div>
+
+    <!-- comparison table -->
+    <div class="card s2">
+      <h2>RBT vs B-트리 종합 비교 <span class="tag">— 10억 키 워크로드</span></h2>
+      <table class="cmp">
+        <tr><th>항목</th><th>RBT</th><th>B-트리(차수 1000)</th></tr>
+        <tr><td>노드당 키 수</td><td class="rbt">1</td><td class="btr">수백 ~ 수천</td></tr>
+        <tr><td>트리 높이</td><td class="rbt">~30</td><td class="btr">3</td></tr>
+        <tr><td>디스크 접근 횟수</td><td class="rbt">~30회</td><td class="btr">3회</td></tr>
+        <tr><td>탐색 시간(HDD)</td><td class="rbt">~150 ms</td><td class="btr">~15 ms</td></tr>
+        <tr><td>노드 ↔ 저장 단위</td><td class="rbt">메모리 셀</td><td class="btr">디스크 블록 4KB</td></tr>
+        <tr><td>주 활용처</td><td class="rbt">인메모리 균형 트리</td><td class="btr">DBMS · 파일시스템</td></tr>
+      </table>
+    </div>
+
+    <!-- 결론 카드 -->
+    <div class="card s2">
+      <h2>핵심 결론 <span class="tag">— 왜 DB는 B-트리를 쓰는가</span></h2>
+      <p class="desc">두 자료구조 모두 높이를 O(log n)으로 묶지만, 로그의 <b style="color:var(--gold)">밑(base)</b>이 다르다.</p>
+      <svg viewBox="0 0 540 120" role="img" aria-label="로그 밑 비교">
+        <text x="20" y="40" class="axislbl" fill="#ff9aa3" font-weight="700">RBT</text>
+        <text x="90" y="40" class="keytxt" fill="#eaf0fb">h ≈ 2·log₂(n) → 밑 2 (이진 분기)</text>
+        <text x="20" y="90" class="axislbl" fill="#7ce6cf" font-weight="700">B-트리</text>
+        <text x="90" y="90" class="keytxt" fill="#eaf0fb">h ≈ log₁₀₀₀(n) → 밑 1000 (다진 분기)</text>
+        <line x1="20" y1="58" x2="520" y2="58" stroke="#243352" stroke-width="1"/>
+      </svg>
+      <p class="note"><b>한 줄 요약:</b> 분기 폭(차수)을 키워 높이를 낮추면, 가장 비싼 자원인 <b>디스크 접근 횟수</b>가 ~30회에서 3회로 약 10배 줄어든다. 이것이 B-트리가 DBMS·파일시스템의 표준 인덱스 구조인 이유다.</p>
+    </div>
+
+  </div>
+  <footer>KUS-TUDY · Big O(S) 스터디 활동 증빙 자료</footer>
+</div>
+
+<script>
+// 로드 즉시 완성 대시보드를 보장한다 (모든 그래프/다이어그램은 정적 SVG).
+// 비율 막대에 짧은 카운트업을 부여해 50,000배 격차를 시각적으로 강조한다.
+(function(){
+  const fill = document.getElementById('ratioFill');
+  const target = 50000;
+  // 너비는 기본적으로 100%로 채워져 있어 스크린샷에서도 완성 상태로 보인다.
+  let cur = 0; const t0 = performance.now();
+  function step(now){
+    const p = Math.min(1, (now - t0)/700);
+    cur = Math.round(target * (1 - Math.pow(1-p,3)) / 1000) * 1000;
+    if(cur < 1000) cur = 1000;
+    fill.textContent = '디스크 / 메모리 = ' + cur.toLocaleString('ko-KR') + '×';
+    if(p < 1) requestAnimationFrame(step);
+    else fill.textContent = '디스크 / 메모리 = 50,000×';
+  }
+  requestAnimationFrame(step);
+  console.log('[Big O(S) 6주차] RBT 높이~30(≈150ms) vs B-트리(차수1000) 높이3, 디스크/메모리=50,000배');
+})();
+</script>
+</body>
+</html>

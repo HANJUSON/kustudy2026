@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Race Condition 시뮬레이터 · Big O(S)</title>
+<style>
+  :root{
+    --bg:#0e1320; --panel:#161d2e; --panel2:#1c2540; --line:#283353;
+    --ink:#e8edf7; --muted:#94a3c4; --accent:#6ea8fe; --accent2:#7ee0c2;
+    --bad:#ff6b81; --good:#3ddc97; --warn:#ffce6b; --prod:#7ea8ff; --cons:#ff9ec4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Malgun Gothic","Apple SD Gothic Neo","Segoe UI",sans-serif;
+    background:radial-gradient(1200px 700px at 20% -10%,#1b2440,transparent),var(--bg);
+    color:var(--ink); padding:18px; line-height:1.5;
+  }
+  .header{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    background:linear-gradient(90deg,#202a47,#161d2e);
+    border:1px solid var(--line);border-radius:14px;padding:14px 20px;margin-bottom:16px;
+    box-shadow:0 8px 30px rgba(0,0,0,.35);
+  }
+  .logo{font-weight:800;font-size:19px;letter-spacing:.5px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .crumb{color:var(--muted);font-size:14px}
+  .crumb b{color:var(--ink)}
+  .sep{color:#3a4566}
+  .pill{margin-left:auto;font-size:12.5px;color:#0e1320;background:linear-gradient(90deg,var(--accent2),var(--accent));
+    padding:5px 12px;border-radius:999px;font-weight:700}
+  .grid{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+  .card h2{font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .tag{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  button{font-family:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--ink);
+    padding:9px 14px;border-radius:10px;font-size:13px;font-weight:600;transition:.15s}
+  button:hover{border-color:var(--accent);transform:translateY(-1px)}
+  button.active{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#0e1320;border-color:transparent}
+  button.ghost{background:transparent}
+  .scene{display:grid;grid-template-columns:1fr 90px 1fr;gap:10px;align-items:start}
+  .thread{border-radius:12px;padding:12px;border:1px solid var(--line);background:var(--panel2)}
+  .thread.prod{box-shadow:inset 0 0 0 1px rgba(126,168,255,.18)}
+  .thread.cons{box-shadow:inset 0 0 0 1px rgba(255,158,196,.18)}
+  .thread .title{font-weight:700;font-size:13px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+  .dotP{color:var(--prod)} .dotC{color:var(--cons)}
+  .reg{display:flex;justify-content:space-between;background:#11182a;border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:5px 0;font-family:"Consolas",monospace;font-size:13px}
+  .reg .v{font-weight:800}
+  .reg.hot{border-color:var(--warn);box-shadow:0 0 0 2px rgba(255,206,107,.18)}
+  .midcol{display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:34px}
+  .membox{width:84px;text-align:center;background:#0d1424;border:2px solid var(--accent);border-radius:12px;padding:10px 4px}
+  .membox .lab{font-size:10.5px;color:var(--muted)}
+  .membox .num{font-size:30px;font-weight:800;font-family:"Consolas",monospace;line-height:1.1}
+  .membox.flash{animation:flash .5s}
+  @keyframes flash{0%{background:#2a2030;border-color:var(--warn)}100%{background:#0d1424;border-color:var(--accent)}}
+  .steps{margin-top:14px;border-top:1px dashed var(--line);padding-top:12px}
+  .steprow{display:flex;gap:10px;align-items:flex-start;padding:6px 8px;border-radius:8px;font-size:13px;opacity:.42;transition:.2s}
+  .steprow .idx{min-width:22px;height:22px;border-radius:6px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--muted)}
+  .steprow.done{opacity:.85}
+  .steprow.cur{opacity:1;background:rgba(110,168,254,.12)}
+  .steprow.cur .idx{background:var(--accent);color:#0e1320}
+  .steprow code{font-family:"Consolas",monospace;font-size:12.5px}
+  .steprow.tP code{color:var(--prod)} .steprow.tC code{color:var(--cons)}
+  .result{margin-top:14px;display:flex;align-items:center;gap:14px;background:#0d1424;border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+  .result .big{font-size:40px;font-weight:800;font-family:"Consolas",monospace}
+  .result.bad .big{color:var(--bad)} .result.good .big{color:var(--good)}
+  .result .txt{font-size:13px;color:var(--muted)}
+  .result .txt b{color:var(--ink)}
+  .cond{display:grid;gap:10px}
+  .condcard{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:linear-gradient(180deg,var(--panel2),var(--panel))}
+  .condcard .k{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:8px}
+  .condcard .k .en{font-size:11px;color:var(--muted);font-weight:600}
+  .condcard .d{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .ic{width:22px;height:22px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:#0e1320;font-weight:800}
+  .hw{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .chip{font-family:"Consolas",monospace;font-size:12px;background:#0d1424;border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--accent2)}
+  .lockbar{margin-top:12px;height:34px;border-radius:10px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:#0d1424}
+  .lockbar.locked{background:linear-gradient(90deg,#33222b,#2a1d24);color:var(--cons);border-color:var(--cons)}
+  .lockbar.free{color:var(--good);border-color:var(--good)}
+  .footer{margin-top:18px;text-align:center;color:var(--muted);font-size:12.5px;letter-spacing:.3px}
+  .legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:6px}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+</style>
+</head>
+<body>
+  <div class="header">
+    <span class="logo">Big O(S)</span>
+    <span class="crumb">· <b>07주차</b> · <b>Race Condition &amp; 동기화</b> · 2026.05.10</span>
+    <span class="pill">증빙 · 임계구역 시뮬레이터</span>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT: simulator -->
+    <div class="card">
+      <h2>인터리빙 시뮬레이터 <span class="tag">count = 5 · producer count++ / consumer count--</span></h2>
+      <div class="controls">
+        <button id="b6" class="active">동기화 없음 → 결과 6</button>
+        <button id="b4">동기화 없음 → 결과 4</button>
+        <button id="bmx">Mutex 적용 → 결과 5</button>
+        <button id="bstep" class="ghost">▶ 단계 진행</button>
+        <button id="breset" class="ghost">↺ 리셋</button>
+      </div>
+
+      <div class="scene">
+        <div class="thread prod" id="thP">
+          <div class="title"><span><span class="dotP">●</span> Producer (P) · count++</span></div>
+          <div class="reg" id="pR1"><span>register₁</span><span class="v" id="pR1v">—</span></div>
+          <div class="reg" id="pR1b"><span>register₁ = register₁ + 1</span><span class="v" id="pR1bv">—</span></div>
+        </div>
+
+        <div class="midcol">
+          <div class="membox" id="mem">
+            <div class="lab">공유 메모리</div>
+            <div class="num" id="memv">5</div>
+            <div class="lab">count</div>
+          </div>
+        </div>
+
+        <div class="thread cons" id="thC">
+          <div class="title"><span><span class="dotC">●</span> Consumer (C) · count--</span></div>
+          <div class="reg" id="cR2"><span>register₂</span><span class="v" id="cR2v">—</span></div>
+          <div class="reg" id="cR2b"><span>register₂ = register₂ − 1</span><span class="v" id="cR2bv">—</span></div>
+        </div>
+      </div>
+
+      <div class="lockbar free" id="lockbar">🔓 mutex 미사용 — 두 스레드가 임계구역에 동시 진입 가능</div>
+
+      <div class="steps" id="steps"></div>
+
+      <div class="result bad" id="result">
+        <div class="big" id="resnum">?</div>
+        <div class="txt" id="restxt">실행 순서(인터리빙)에 따라 결과가 달라집니다. 정답은 <b>5</b>여야 합니다.</div>
+      </div>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--prod)"></span> Producer 명령</span>
+        <span><span class="sw" style="background:var(--cons)"></span> Consumer 명령</span>
+        <span><span class="sw" style="background:var(--good)"></span> 정답(5)</span>
+        <span><span class="sw" style="background:var(--bad)"></span> 오답(4·6)</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: critical-section conditions + hardware -->
+    <div class="card">
+      <h2>임계구역 해결 3조건 <span class="tag">Critical-Section Problem</span></h2>
+      <div class="cond">
+        <div class="condcard">
+          <div class="k"><span class="ic" style="background:var(--accent)">1</span> 상호배제 <span class="en">Mutual Exclusion</span></div>
+          <div class="d">한 번에 오직 하나의 프로세스만 임계구역에 진입할 수 있다. count의 동시 수정을 차단한다.</div>
+        </div>
+        <div class="condcard">
+          <div class="k"><span class="ic" style="background:var(--accent2)">2</span> 진행 <span class="en">Progress</span></div>
+          <div class="d">임계구역이 비어 있으면 진입하려는 프로세스 선택을 무한정 미룰 수 없다.</div>
+        </div>
+        <div class="condcard">
+          <div class="k"><span class="ic" style="background:var(--warn)">3</span> 한계대기 <span class="en">Bounded Waiting</span></div>
+          <div class="d">요청 후 다른 프로세스가 먼저 진입할 수 있는 횟수에 상한이 존재한다(기아 방지).</div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:18px">하드웨어 원자 연산 <span class="tag">모든 동기화의 기반</span></h2>
+      <div class="hw">
+        <span class="chip">test_and_set()</span>
+        <span class="chip">compare_and_swap() · CAS</span>
+        <span class="chip">lock cmpxchg</span>
+      </div>
+      <div class="condcard" style="margin-top:12px">
+        <div class="k"><span class="ic" style="background:var(--good)">✓</span> Mutex Lock</div>
+        <div class="d">acquire()·release()를 CAS로 원자 실행. Spinlock은 락을 얻을 때까지 루프를 도는 mutex로, 락 점유 시간이 문맥 교환 2회보다 짧을 때 효율적이다.</div>
+      </div>
+      <div class="condcard" style="margin-top:10px">
+        <div class="k"><span class="ic" style="background:var(--cons)">!</span> Race Condition 핵심</div>
+        <div class="d">producer의 <code>count++</code>는 실제로 <b>읽기→증가→쓰기</b> 3단계다. consumer의 <code>count--</code>와 명령어가 뒤섞이면(인터리브) 한쪽의 결과가 덮어써져 4 또는 6이 나온다.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">KUS-TUDY · Big O(S) 스터디 활동 증빙 자료</div>
+
+<script>
+(function(){
+  // ---- scenarios: each step = {t:'P'|'C', code, action} ----
+  // result 6: P reads, P inc, C reads(old), P writes 6, C dec, C writes 4? -> we craft classic
+  // Classic interleavings (Silberschatz):
+  //  result 4: P:read(5) ; C:read(5) ; P:reg=6 ; C:reg=4 ; P:write(6) ; C:write(4)  => 4
+  //  result 6: P:read(5) ; C:read(5) ; P:reg=6 ; C:reg=4 ; C:write(4) ; P:write(6)  => 6
+  // mutex result 5: full lock so P completes then C completes.
+  const scenarios = {
+    s6:{ name:'동기화 없음 → 결과 6', good:false, locked:false, result:6,
+      steps:[
+        {t:'P',code:'register₁ = count', set:{pR1:5}, mem:5, desc:'P가 count(5)를 register₁로 읽음'},
+        {t:'C',code:'register₂ = count', set:{cR2:5}, mem:5, desc:'C가 같은 count(5)를 register₂로 읽음 (덮어쓰기 위험!)'},
+        {t:'P',code:'register₁ = register₁ + 1', set:{pR1b:6}, mem:5, desc:'P가 register₁을 6으로 증가'},
+        {t:'C',code:'register₂ = register₂ − 1', set:{cR2b:4}, mem:5, desc:'C가 register₂를 4로 감소'},
+        {t:'C',code:'count = register₂', set:{}, mem:4, desc:'C가 먼저 count=4 기록'},
+        {t:'P',code:'count = register₁', set:{}, mem:6, desc:'P가 나중에 count=6 기록 → C의 결과가 사라짐!'}
+      ]},
+    s4:{ name:'동기화 없음 → 결과 4', good:false, locked:false, result:4,
+      steps:[
+        {t:'P',code:'register₁ = count', set:{pR1:5}, mem:5, desc:'P가 count(5)를 register₁로 읽음'},
+        {t:'C',code:'register₂ = count', set:{cR2:5}, mem:5, desc:'C가 같은 count(5)를 register₂로 읽음 (덮어쓰기 위험!)'},
+        {t:'P',code:'register₁ = register₁ + 1', set:{pR1b:6}, mem:5, desc:'P가 register₁을 6으로 증가'},
+        {t:'C',code:'register₂ = register₂ − 1', set:{cR2b:4}, mem:5, desc:'C가 register₂를 4로 감소'},
+        {t:'P',code:'count = register₁', set:{}, mem:6, desc:'P가 먼저 count=6 기록'},
+        {t:'C',code:'count = register₂', set:{}, mem:4, desc:'C가 나중에 count=4 기록 → P의 결과가 사라짐!'}
+      ]},
+    smx:{ name:'Mutex 적용 → 결과 5', good:true, locked:true, result:5,
+      steps:[
+        {t:'P',code:'acquire(mutex)', set:{}, mem:5, lock:true, desc:'P가 락 획득 → 임계구역 진입. C는 진입 불가(상호배제)'},
+        {t:'P',code:'register₁ = count', set:{pR1:5}, mem:5, lock:true, desc:'P가 count(5)를 읽음'},
+        {t:'P',code:'register₁ = register₁ + 1', set:{pR1b:6}, mem:5, lock:true, desc:'P가 6으로 증가'},
+        {t:'P',code:'count = register₁ ; release(mutex)', set:{}, mem:6, lock:false, desc:'P가 count=6 기록 후 락 해제'},
+        {t:'C',code:'acquire(mutex) ; register₂ = count', set:{cR2:6}, mem:6, lock:true, desc:'이제 C가 락 획득 → 최신값 6을 읽음'},
+        {t:'C',code:'register₂ = register₂ − 1 ; count = register₂ ; release()', set:{cR2b:5}, mem:5, lock:false, desc:'C가 5로 감소·기록 → 정답 5 보장!'}
+      ]}
+  };
+
+  let cur='s6', i=0, timer=null;
+  const $=id=>document.getElementById(id);
+  const stepsEl=$('steps'), memv=$('memv'), mem=$('mem');
+
+  function renderSteps(sc){
+    stepsEl.innerHTML='';
+    sc.steps.forEach((s,k)=>{
+      const row=document.createElement('div');
+      row.className='steprow t'+s.t;
+      row.id='step'+k;
+      row.innerHTML='<div class="idx">'+(k+1)+'</div><div><code>['+s.t+'] '+s.code+'</code><div style="font-size:11.5px;color:var(--muted)">'+s.desc+'</div></div>';
+      stepsEl.appendChild(row);
+    });
+  }
+  function resetRegs(){
+    ['pR1v','pR1bv','cR2v','cR2bv'].forEach(x=>$(x).textContent='—');
+    ['pR1','pR1b','cR2','cR2b'].forEach(x=>$(x).classList.remove('hot'));
+  }
+  function setLock(locked){
+    const lb=$('lockbar');
+    if(locked){lb.className='lockbar locked';lb.textContent='🔒 임계구역 잠김 — mutex 보유 스레드만 진입';}
+    else{lb.className='lockbar free';lb.textContent='🔓 mutex 미사용 — 두 스레드가 임계구역에 동시 진입 가능';}
+  }
+
+  function load(key){
+    cur=key; i=0; if(timer){clearInterval(timer);timer=null;}
+    const sc=scenarios[key];
+    document.querySelectorAll('.controls button').forEach(b=>b.classList.remove('active'));
+    if(key==='s6')$('b6').classList.add('active');
+    if(key==='s4')$('b4').classList.add('active');
+    if(key==='smx')$('bmx').classList.add('active');
+    resetRegs(); memv.textContent='5'; mem.classList.remove('flash');
+    renderSteps(sc);
+    setLock(key==='smx');
+    $('result').className='result '+(sc.good?'good':'bad');
+    $('resnum').textContent='?';
+    $('restxt').innerHTML = sc.good
+      ? 'Mutex로 임계구역을 보호하면 인터리빙이 차단되어 항상 <b>5</b>가 나옵니다.'
+      : '실행 순서(인터리빙)에 따라 결과가 달라집니다. 정답은 <b>5</b>여야 합니다.';
+    // auto-play whole scenario for an instantly-complete screenshot
+    autoplay();
+  }
+
+  function applyStep(s,k){
+    if(s.set.pR1!==undefined){$('pR1v').textContent=s.set.pR1;$('pR1').classList.add('hot');}
+    if(s.set.pR1b!==undefined){$('pR1bv').textContent=s.set.pR1b;$('pR1b').classList.add('hot');}
+    if(s.set.cR2!==undefined){$('cR2v').textContent=s.set.cR2;$('cR2').classList.add('hot');}
+    if(s.set.cR2b!==undefined){$('cR2bv').textContent=s.set.cR2b;$('cR2b').classList.add('hot');}
+    if(s.mem!==undefined && s.mem!=parseInt(memv.textContent)){memv.textContent=s.mem;mem.classList.remove('flash');void mem.offsetWidth;mem.classList.add('flash');}
+    else if(s.mem!==undefined){memv.textContent=s.mem;}
+    if(s.lock!==undefined)setLock(s.lock);
+    document.querySelectorAll('.steprow').forEach((r,idx)=>{r.classList.remove('cur');if(idx<k)r.classList.add('done');});
+    const cr=$('step'+k); if(cr){cr.classList.add('cur');cr.classList.add('done');}
+  }
+
+  function finish(){
+    const sc=scenarios[cur];
+    $('resnum').textContent=sc.result;
+    if(sc.good){
+      $('restxt').innerHTML='임계구역이 보호되어 producer와 consumer가 직렬 실행 → 결과 <b>5</b> (정답). race condition 없음.';
+    }else{
+      $('restxt').innerHTML='인터리빙으로 한 스레드의 쓰기가 덮어써져 결과 <b>'+sc.result+'</b> (오답). 정답 5와 불일치 → Race Condition 발생.';
+    }
+  }
+
+  function next(){
+    const sc=scenarios[cur];
+    if(i>=sc.steps.length){return false;}
+    applyStep(sc.steps[i],i);
+    i++;
+    if(i>=sc.steps.length){finish();}
+    return true;
+  }
+
+  function autoplay(){
+    if(timer)clearInterval(timer);
+    timer=setInterval(()=>{ if(!next()){clearInterval(timer);timer=null;} },650);
+  }
+
+  $('b6').onclick=()=>load('s6');
+  $('b4').onclick=()=>load('s4');
+  $('bmx').onclick=()=>load('smx');
+  $('bstep').onclick=()=>{ if(timer){clearInterval(timer);timer=null;} next(); };
+  $('breset').onclick=()=>load(cur);
+
+  // default: synchronization-less scenario resulting in 6, fully animated on load
+  load('s6');
+})();
+</script>
+</body>
+</html>

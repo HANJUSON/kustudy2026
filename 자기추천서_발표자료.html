@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[KUS-TUDY] 우수그룹 자기추천서 — Big O(S)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary:#8B0029; --primary-deep:#6E0021; --primary-bright:#A30734; --gold:#B8860B;
+    --ink:#222222; --body:#333333; --muted:#666666; --faint:#999999;
+    --canvas:#ffffff; --warm:#f7f5f3; --gray:#f4f4f4;
+    --charcoal:#2b2b2b; --crimson-deep:#5C001B; --footer:#1f1f1f;
+    --hairline:#e0e0e0; --hairline-strong:#cccccc;
+    --sans:'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+    --serif:'Noto Serif KR','Malgun Gothic',serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{background:#1a1a1a;font-family:var(--sans);color:var(--body);
+    letter-spacing:-0.3px;-webkit-font-smoothing:antialiased;overflow:hidden;}
+
+  /* ---- progress + nav ---- */
+  #progress{position:fixed;top:0;left:0;height:4px;background:var(--primary);z-index:50;transition:width .25s ease;}
+  #nav{position:fixed;bottom:18px;right:22px;z-index:50;display:flex;align-items:center;gap:10px;}
+  #nav button{font-family:var(--sans);font-size:15px;font-weight:500;color:#fff;background:rgba(139,0,41,.92);
+    border:none;width:42px;height:42px;cursor:pointer;line-height:1;transition:background .15s;}
+  #nav button:hover{background:var(--primary-deep);}
+  #counter{font-size:13px;color:#cfcfcf;letter-spacing:0;min-width:58px;text-align:center;
+    font-variant-numeric:tabular-nums;}
+  #hint{position:fixed;bottom:24px;left:22px;z-index:50;font-size:12px;color:#8a8a8a;letter-spacing:0;}
+
+  /* ---- stage scaling ---- */
+  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
+  #deck{width:1280px;height:720px;position:relative;transform-origin:center center;
+    box-shadow:0 18px 60px rgba(0,0,0,.55);}
+  .slide{position:absolute;inset:0;width:1280px;height:720px;display:none;flex-direction:column;
+    background:var(--canvas);overflow:hidden;}
+  .slide.active{display:flex;}
+  .band-warm{background:var(--warm);}
+  .band-crimson{background:var(--primary);color:#fff;}
+  .band-charcoal{background:var(--charcoal);color:#fff;}
+
+  /* ---- common slide chrome ---- */
+  .pad{padding:56px 72px;display:flex;flex-direction:column;height:100%;}
+  .kicker{font-size:14px;font-weight:700;color:var(--primary);letter-spacing:.4px;margin-bottom:10px;}
+  .s-title{font-family:var(--sans);font-size:28px;font-weight:700;color:var(--ink);letter-spacing:-0.5px;line-height:1.35;}
+  .s-rule{width:48px;height:3px;background:var(--primary);margin-top:14px;margin-bottom:24px;}
+  .lead{font-size:18px;line-height:1.65;color:var(--body);letter-spacing:-0.3px;}
+  .foot{position:absolute;bottom:20px;left:72px;font-size:12px;color:var(--faint);letter-spacing:0;}
+  .pageno{position:absolute;bottom:20px;right:72px;font-size:12px;color:var(--faint);letter-spacing:0;
+    font-variant-numeric:tabular-nums;}
+
+  /* ---- generic blocks ---- */
+  .card{background:var(--canvas);border:1px solid var(--hairline);padding:20px 22px;}
+  .band-warm .card{background:#fff;}
+  .card h3{font-size:17px;font-weight:700;color:var(--ink);margin-bottom:8px;letter-spacing:-0.3px;}
+  .tag{display:inline-block;font-size:12px;font-weight:700;color:#fff;background:var(--primary);
+    padding:3px 10px;margin-bottom:10px;letter-spacing:0;}
+  .tag.line{background:transparent;color:var(--primary);border:1px solid var(--primary);}
+  .cols2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .cols3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;}
+  .cols4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;}
+  .grow{flex:1;min-height:0;}
+  ul.b{list-style:none;}
+  ul.b li{position:relative;padding-left:16px;margin:9px 0;font-size:15px;line-height:1.6;color:var(--body);}
+  ul.b li::before{content:"";position:absolute;left:0;top:9px;width:6px;height:6px;background:var(--primary);}
+  ul.b li b,.card b{color:var(--ink);font-weight:700;}
+  .muted{color:var(--muted);}
+  .small{font-size:13px;line-height:1.62;}
+  code,.mono{font-family:'Consolas','D2Coding',monospace;font-size:.92em;color:var(--primary-deep);
+    background:var(--gray);padding:1px 5px;}
+
+  /* ---- table ---- */
+  table.ku{width:100%;border-collapse:collapse;font-size:13px;line-height:1.45;}
+  table.ku th{background:var(--primary);color:#fff;font-weight:700;text-align:left;padding:9px 10px;
+    letter-spacing:-0.2px;border:1px solid var(--primary);}
+  table.ku td{padding:8px 10px;border:1px solid var(--hairline-strong);color:var(--body);vertical-align:top;}
+  table.ku tr:nth-child(even) td{background:var(--gray);}
+  table.ku tbody tr:nth-child(even){background:var(--gray);}
+  table.ku .wk{font-weight:700;color:var(--primary);text-align:center;white-space:nowrap;}
+  table.ku .dt{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums;}
+  table.ku .tp{font-weight:700;color:var(--ink);}
+  table.ku .out b{color:var(--primary-deep);}
+
+  /* ---- member table ---- */
+  table.mem{width:100%;border-collapse:collapse;font-size:15px;}
+  table.mem th{background:var(--gray);color:var(--ink);font-weight:700;text-align:left;padding:11px 14px;
+    border-bottom:2px solid var(--primary);}
+  table.mem td{padding:11px 14px;border-bottom:1px solid var(--hairline);color:var(--body);}
+  table.mem td.nm{font-weight:700;color:var(--ink);}
+  table.mem td.no{color:var(--primary);font-weight:700;width:54px;}
+
+  /* ---- gallery ---- */
+  .gal{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+  .gcard{border:1px solid var(--hairline);background:#fff;display:flex;flex-direction:column;}
+  .gcard .gh{display:flex;align-items:baseline;gap:8px;padding:8px 12px;border-bottom:1px solid var(--hairline);}
+  .gcard .gh .gw{font-size:13px;font-weight:700;color:var(--primary);}
+  .gcard .gh .gt{font-size:12px;color:var(--muted);letter-spacing:-0.2px;}
+  .gimgs{display:flex;gap:0;}
+  .gimgs figure{position:relative;background:var(--gray);overflow:hidden;height:120px;flex:1 1 0;min-width:0;border-right:1px solid var(--hairline);}
+  .gimgs figure:last-child{border-right:none;}
+  .gimgs img{width:100%;height:100%;object-fit:cover;display:block;}
+  .gimgs figcaption{position:absolute;left:0;bottom:0;font-size:10px;font-weight:700;color:#fff;
+    background:rgba(139,0,41,.88);padding:2px 6px;letter-spacing:0;}
+  .gimgs figcaption.alt{background:rgba(43,43,43,.85);}
+
+  /* ---- agenda ---- */
+  .agenda{display:flex;flex-direction:column;gap:0;flex:1;justify-content:center;}
+  .agenda .row{display:flex;align-items:center;gap:24px;padding:16px 4px;border-bottom:1px solid var(--hairline);}
+  .agenda .num{font-family:var(--serif);font-size:38px;font-weight:700;color:var(--primary);width:64px;
+    line-height:1;letter-spacing:-1px;}
+  .agenda .ttl{font-size:21px;font-weight:700;color:var(--ink);}
+  .agenda .sub{font-size:14px;color:var(--muted);margin-left:auto;letter-spacing:-0.2px;}
+
+  /* ---- cover / closing (crimson) ---- */
+  .cover{height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 86px;position:relative;}
+  .motto{font-family:var(--serif);font-size:14px;letter-spacing:1.6px;color:rgba(255,255,255,.62);margin-bottom:30px;}
+  .cover .ck{font-size:15px;font-weight:700;letter-spacing:.5px;color:rgba(255,255,255,.9);margin-bottom:18px;}
+  .cover h1{font-family:var(--serif);font-size:84px;font-weight:700;letter-spacing:-1.5px;line-height:1.05;margin-bottom:18px;}
+  .cover .subt{font-size:22px;font-weight:400;color:rgba(255,255,255,.92);letter-spacing:-0.3px;line-height:1.5;}
+  .cover .rule{width:70px;height:4px;background:#fff;margin:30px 0;}
+  .cover .who{font-size:16px;color:rgba(255,255,255,.92);line-height:1.7;letter-spacing:-0.2px;}
+  .cover .date{position:absolute;bottom:48px;right:86px;font-size:14px;color:rgba(255,255,255,.7);
+    letter-spacing:0;font-variant-numeric:tabular-nums;}
+  .cover .crest{position:absolute;top:46px;right:86px;text-align:right;font-size:13px;font-weight:700;
+    letter-spacing:.5px;color:rgba(255,255,255,.85);line-height:1.5;}
+
+  .note{font-size:13px;color:var(--muted);line-height:1.62;border-left:3px solid var(--primary);
+    padding:8px 0 8px 14px;background:var(--gray);padding-right:12px;}
+  .band-warm .note{background:#fff;}
+
+  @media print{
+    body{overflow:visible;background:#fff;}
+    #nav,#hint,#progress{display:none;}
+    #stage{position:static;display:block;}
+    #deck{transform:none!important;box-shadow:none;width:1280px;height:auto;}
+    .slide{display:flex!important;position:relative;page-break-after:always;border-bottom:1px solid #ccc;}
+  }
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<div id="stage">
+  <div id="deck">
+
+  <!-- 1 COVER -->
+  <section class="slide band-crimson active">
+    <div class="cover">
+      <div class="crest">KOREA UNIVERSITY<br>과학기술대학 · KUS-TUDY</div>
+      <div class="motto">LIBERTAS · JUSTITIA · VERITAS</div>
+      <div class="ck">2026-1 KUS-TUDY · 우수그룹 자기추천서</div>
+      <h1>Big O(S)</h1>
+      <div class="subt">알고리즘 × 운영체제 × LLM<br>강의에서 배운 이론을 매주 '동작하는 코드'로 구현한 한 학기</div>
+      <div class="rule"></div>
+      <div class="who">손한주 · 이태진 · 송명준 · 박상언 &nbsp;|&nbsp; 과학기술대학 컴퓨터융합소프트웨어학과</div>
+      <div class="date">2026.06.14</div>
+    </div>
+  </section>
+
+  <!-- 2 AGENDA -->
+  <section class="slide band-warm">
+    <div class="pad">
+      <div class="kicker">CONTENTS</div>
+      <div class="s-title">목차</div>
+      <div class="s-rule"></div>
+      <div class="agenda">
+        <div class="row"><div class="num">01</div><div class="ttl">팀 소개</div><div class="sub">팀명 · 참여계기와 동기 · 팀 구성 · 팀원</div></div>
+        <div class="row"><div class="num">02</div><div class="ttl">학습 목표</div><div class="sub">전체 팀 목표 · 개인별 목표 · STUDY 영역</div></div>
+        <div class="row"><div class="num">03</div><div class="ttl">주차별 학습 내용</div><div class="sub">1~12주차 학습·활동·결과물 · 활동 사진</div></div>
+        <div class="row"><div class="num">04</div><div class="ttl">학습목표를 위한 노력 · 전략</div><div class="sub">준비·진행·개선 · 역할·규칙 · 결과물 · 증빙</div></div>
+        <div class="row"><div class="num">05</div><div class="ttl">활동 소감</div><div class="sub">잘한 점 · 아쉬운 점 · 성과 · 팀원별 소감</div></div>
+        <div class="row"><div class="num">06</div><div class="ttl">앞으로의 계획</div><div class="sub">마무리 후 · 향후 계획 · 팀원별 계획</div></div>
+      </div>
+    </div>
+    <div class="pageno">02</div>
+  </section>
+
+  <!-- 3 §1 팀명 + 동기 -->
+  <section class="slide">
+    <div class="pad">
+      <div class="kicker">01 · 팀 소개</div>
+      <div class="s-title">팀명 · 참여계기와 동기</div>
+      <div class="s-rule"></div>
+      <div class="card" style="margin-bottom:22px;">
+        <span class="tag">팀명</span>
+        <h3 style="font-family:var(--sans);font-size:26px;font-weight:700;color:var(--primary);margin-bottom:6px;">Big O(S)</h3>
+        <div class="lead" style="font-size:16px;">알고리즘과 운영체제(OS) 수업을 함께 공부한다는 뜻으로, 점근 표기 <b>Big-O</b>와 <b>O(S) = OS</b>를 겹쳐 두 과목의 용어를 혼재하였다.</div>
+      </div>
+      <div class="card">
+        <span class="tag line">참여계기 및 동기</span>
+        <div class="lead">우리 4명은 모두 군휴학 후 올해 복학하였다. 2년 전만 해도 AI는 커닝을 위한 도구에 불과했지만, 2년이 지난 지금 AI는 개발자에게 없어서는 안 될 생산 도구가 되었다. 뒤처진 기술 트렌드를 따라잡기 위해, AI를 적극 활용하는 알고리즘·운영체제 수업을 통해 컴퓨터 과학 전공 지식과 기술 활용 능력을 함양한다.</div>
+      </div>
+    </div>
+    <div class="pageno">03</div>
+  </section>
+
+  <!-- 4 §1 팀 구성 + 팀원 -->
+  <section class="slide band-warm">
+    <div class="pad">
+      <div class="kicker">01 · 팀 소개</div>
+      <div class="s-title">팀 구성 · 팀원 소개</div>
+      <div class="s-rule"></div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="lead" style="font-size:16px;">컴퓨터융합소프트웨어학과 <b>4인</b>으로 구성된 팀이다. 전공 기초 과목(알고리즘·운영체제) 학습을 기반으로, 9주차부터는 LLM(Upstage Solar)을 결합한 팀 프로젝트로 확장하였다. 팀 내 역할은 <b>Frontend / Backend / LLM·Prompt / PM(일정·문서)</b> 4개 축으로 나누어 네 명이 각자 주된 역할을 맡고, 필요에 따라 복수 역할을 겸하는 방식으로 운영하였다.</div>
+      </div>
+      <table class="mem">
+        <thead><tr><th>구분</th><th>이름</th><th>학년</th><th>학번</th><th>소속대학</th><th>소속학과</th></tr></thead>
+        <tbody>
+          <tr><td class="no">대표</td><td class="nm">손한주</td><td>3학년</td><td>2022271315</td><td>과학기술대학</td><td>컴퓨터융합소프트웨어학과</td></tr>
+          <tr><td class="no">팀원</td><td class="nm">이태진</td><td>3학년</td><td>2022271344</td><td>과학기술대학</td><td>컴퓨터융합소프트웨어학과</td></tr>
+          <tr><td class="no">팀원</td><td class="nm">송명준</td><td>3학년</td><td>2022271333</td><td>과학기술대학</td><td>컴퓨터융합소프트웨어학과</td></tr>
+          <tr><td class="no">팀원</td><td class="nm">박상언</td><td>3학년</td><td>2022270686</td><td>과학기술대학</td><td>컴퓨터융합소프트웨어학과</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pageno">04</div>
+  </section>
+
+  <!-- 5 §2 학습목표 -->
+  <section class="slide">
+    <div class="pad">
+      <div class="kicker">02 · 학습 목표</div>
+      <div class="s-title">전체 팀 목표 · STUDY 영역</div>
+      <div class="s-rule"></div>
+      <div class="cols2 grow" style="align-items:start;">
+        <div class="card" style="height:100%;">
+          <span class="tag">전체 팀 목표</span>
+          <div class="lead" style="font-size:15.5px;">매주 강의에서 배운 알고리즘·운영체제 핵심 개념을 곧바로 동작하는 코드·웹앱·시스템으로 구현하여, 개념에 대한 깊은 이해와 실전 응용 능력을 동시에 기른다. 학기 후반에는 LLM(Upstage Solar)을 결합한 팀 프로젝트로 학습 성과를 집약해 실제 결과물을 도출하고, LLM 기반 개발 방식에 적응하는 것을 전체 목표로 삼는다. 이 과정에서 <b>'이론 → 구현 → 검증'</b>의 사이클을 팀의 표준 학습법으로 정착시킨다.</div>
+        </div>
+        <div class="card" style="height:100%;">
+          <span class="tag line">STUDY 영역</span>
+          <ul class="b">
+            <li><b>알고리즘</b> : 분할 정복, 동적 계획법, 탐욕법, 정렬/탐색, 탐색 트리(BST/RBT/B-트리), 해싱, 그래프</li>
+            <li><b>운영체제</b> : 프로세스/스레드, CPU 스케줄링, 동기화, 대용량 저장장치, xv6 커널 직접 수정</li>
+            <li><b>응용</b> : LLM(Upstage Solar Pro)·AI 협업 도구(Claude Code, NVIDIA NIM)를 결합한 웹·시스템 프로젝트</li>
+            <li><b>학습 교재</b> : 『Introduction to Algorithms』(Thomas H. Cormen 외) · 『Operating System Concepts』(Abraham Silberschatz 외)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="pageno">05</div>
+  </section>
+
+  <!-- 6 §2 개인별 목표 -->
+  <section class="slide band-warm">
+    <div class="pad">
+      <div class="kicker">02 · 학습 목표</div>
+      <div class="s-title">개인별 목표</div>
+      <div class="s-rule"></div>
+      <div class="cols2 grow" style="grid-auto-rows:1fr;">
+        <div class="card"><span class="tag">손한주 · LLM 하네스</span><div class="lead" style="font-size:15px;">향후 LLM의 <b>하네스 엔지니어링</b> 능력을 향상해 개발 능력의 기반을 다진다.</div></div>
+        <div class="card"><span class="tag">이태진 · 운영체제·시스템</span><div class="lead" style="font-size:15px;">운영체제·시스템 프로그래밍의 저수준 동작 원리를 깊이 이해하고, AI 협업 도구를 활용해 <b>커널 수준의 코드</b>까지 직접 다루는 시스템 개발 역량을 기른다.</div></div>
+        <div class="card"><span class="tag">송명준 · AI 활용·품질</span><div class="lead" style="font-size:15px;"><b>효율적인 AI 사용법</b>을 숙달해 개발의 품질을 향상시킨다.</div></div>
+        <div class="card"><span class="tag">박상언 · 추천·AI 백엔드</span><div class="lead" style="font-size:15px;"><b>추천 시스템, AI 서비스 백엔드, LLM 기반 애플리케이션</b> 개발자를 위한 개발 능력의 기초를 다진다.</div></div>
+      </div>
+    </div>
+    <div class="pageno">06</div>
+  </section>
+
+  <!-- 7 §3 주차표 1-6 -->
+  <section class="slide">
+    <div class="pad">
+      <div class="kicker">03 · 주차별 학습 내용</div>
+      <div class="s-title">주차별 학습 내용 &nbsp;<span style="font-size:15px;font-weight:400;color:var(--muted);">1 ~ 6주차</span></div>
+      <div class="s-rule"></div>
+      <div class="note" style="margin-bottom:14px;">학습 교재 : 『Introduction to Algorithms』(Cormen 외, 알고리즘) · 『Operating System Concepts』(Silberschatz 외, 운영체제)</div>
+      <table class="ku">
+        <thead><tr><th style="width:42px;">주차</th><th style="width:84px;">일시</th><th style="width:150px;">주제</th><th>핵심 학습·활동 내용</th><th style="width:210px;">결과물</th></tr></thead>
+        <tbody>
+          <tr><td class="wk">1</td><td class="dt">2026.03.29</td><td class="tp">분할 정복 패러다임</td><td>가장 가까운 두 점 쌍(Closest Pair)을 완전탐색 O(n²) vs 분할정복 O(n log²n)으로 구현, 점 100/1000/10000개별 소요시간 비교</td><td class="out">FastAPI+Canvas 웹앱</td></tr>
+          <tr><td class="wk">2</td><td class="dt">2026.03.31</td><td class="tp">멀티스레딩·암달의 법칙</td><td>1,000만 정수 히스토그램을 Pthreads로 병렬 계산, 로컬 히스토그램으로 race condition 회피, 1/2/4/8 스레드 speedup(8스레드 2.35배·메모리 대역폭 병목) 측정</td><td class="out"><code>histogram.c</code> · <b>퀴즈 전원 만점</b></td></tr>
+          <tr><td class="wk">3</td><td class="dt">2026.04.11</td><td class="tp">동적 프로그래밍(DP)</td><td>LCS 점화식 기반 표절 검사기 웹앱 제작, "ALGORITHM"vs"ALTRUISTIC" 유사도 50% 도출, O(nm) 특성 확인</td><td class="out">표절 검사기 웹앱</td></tr>
+          <tr><td class="wk">4</td><td class="dt">2026.04.18</td><td class="tp">CPU 스케줄링 시뮬레이션</td><td>FCFS/SJF/Round Robin을 Gantt 차트와 함께 시뮬레이션, 평균 대기/반환 시간 정량 비교(SJF 최적)</td><td class="out">CPU 스케줄링 시뮬레이터 + 성능 비교 대시보드(HTML 2종)</td></tr>
+          <tr><td class="wk">5</td><td class="dt">2026.04.26</td><td class="tp">중간고사 대비</td><td>오픈북 대비 교과서(OS Concepts 10판 Ch.1~5) 정독·인덱싱, NotebookLM 예상질문 도출·답변, xv6 소스 구조 사전 탐색</td><td class="out">시험 대비 정리본·요약 이미지</td></tr>
+          <tr><td class="wk">6</td><td class="dt">2026.05.03</td><td class="tp">탐색 트리 완전정복</td><td>BST→RBT→B-트리의 균형 유지 원리·복잡도 분석, 동일 키 {7,3,8,1,5} 삽입으로 BST 퇴화 vs RBT 균형 비교 실습</td><td class="out">트리 삽입 비교 실습 노트</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pageno">07</div>
+  </section>
+
+  <!-- 8 §3 주차표 7-12 -->
+  <section class="slide band-warm">
+    <div class="pad">
+      <div class="kicker">03 · 주차별 학습 내용</div>
+      <div class="s-title">주차별 학습 내용 &nbsp;<span style="font-size:15px;font-weight:400;color:var(--muted);">7 ~ 12주차</span></div>
+      <div class="s-rule"></div>
+      <table class="ku">
+        <thead><tr><th style="width:42px;">주차</th><th style="width:84px;">일시</th><th style="width:150px;">주제</th><th>핵심 학습·활동 내용</th><th style="width:210px;">결과물</th></tr></thead>
+        <tbody>
+          <tr><td class="wk">7</td><td class="dt">2026.05.10</td><td class="tp">동기화 이해와 문제 해결</td><td>Race condition·임계구역 3조건, test_and_set/CAS, Mutex/Semaphore/Monitor, 고전 3문제(생산자-소비자/Readers-Writers/식사하는 철학자), Priority Inversion(Pathfinder)</td><td class="out">동기화 개념 정리본</td></tr>
+          <tr><td class="wk">8</td><td class="dt">2026.05.17</td><td class="tp">V 모델·요구사항 구체화</td><td>V 모델(개발↔테스트 대칭)에 알고리즘·동기화 사례를 대입해 요구사항 명세의 중요성 도출, 요구사항 체크리스트 정리</td><td class="out">요구사항 체크리스트</td></tr>
+          <tr><td class="wk">9</td><td class="dt">2026.05.24</td><td class="tp">팀 프로젝트 분석(킥오프)</td><td>YouTube 관심도 분석기 코드 정독, 6단계 점수 파이프라인 알고리즘 매핑, LLM(Solar) 결합 아이디어 브레인스토밍, 팀 레포·Solar API·NVIDIA NIM·Claude Code 신청</td><td class="out">프로젝트 주제 초안, GitHub 레포</td></tr>
+          <tr><td class="wk">10</td><td class="dt">2026.05.30</td><td class="tp">대용량 저장장치·스토리지</td><td>HDD/SSD 구조, 접근시간 계산, FTL·GC·웨어레벨링, 디스크 스케줄링(FCFS/SCAN/C-SCAN/LOOK), RAID 0·1·4·5·6·10 비교</td><td class="out">I/O 스케줄링 코드·비교표</td></tr>
+          <tr><td class="wk">11</td><td class="dt">2026.06.07</td><td class="tp">알고리즘 + LLM 프로그램</td><td>Heap Sort·Binary Search·LRU 캐시·Union-Find·Kruskal 최대신장포레스트를 직접 구현하고 Upstage Solar로 추천/페르소나 생성, 수치계산(결정론)과 LLM(해석) 역할 분리</td><td class="out"><b>Liberal_algorithm</b><br><span class="small mono">github.com/HANJUSON/Liberal_algorithm</span></td></tr>
+          <tr><td class="wk">12</td><td class="dt">2026.06.14</td><td class="tp">xv6 기반 LLM 멀티에이전트 OS</td><td>5개 LLM 에이전트(parser→classifier→root-cause→fix-suggester→evaluator)를 xv6 프로세스로 구동, 모든 오케스트레이션을 직접 수정한 xv6 커널에 구현(신규 시스템 콜 22–33), Pattern A 검증·롤백, Pattern B 커널 시맨틱 캐시, 프로세스별 메모리 쿼터</td><td class="out"><b>Liberal_OS</b><br><span class="small mono">github.com/HANJUSON/Liberal_OS</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pageno">08</div>
+  </section>
+
+  <!-- 9 §3 사진 갤러리 1-6 -->
+  <section class="slide">
+    <div class="pad">
+      <div class="kicker">03 · 주차별 학습 내용</div>
+      <div class="s-title">주차별 활동 · 결과물 사진 &nbsp;<span style="font-size:15px;font-weight:400;color:var(--muted);">1 ~ 6주차</span></div>
+      <div class="s-rule"></div>
+      <div class="gal grow" style="grid-template-columns:1fr 1fr 1fr;grid-auto-rows:min-content;">
+        <div class="gcard"><div class="gh"><span class="gw">1주차</span><span class="gt">분할 정복</span></div>
+          <div class="gimgs"><figure><img src="week01/KakaoTalk_20260329_094403610.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week01/WebApplication.png" alt=""><figcaption class="alt">결과물</figcaption></figure><figure><img src="week01/image01.png" alt=""><figcaption class="alt">실행1</figcaption></figure><figure><img src="week01/image02.png" alt=""><figcaption class="alt">실행2</figcaption></figure></div></div>
+        <div class="gcard"><div class="gh"><span class="gw">2주차</span><span class="gt">멀티스레딩·암달</span></div>
+          <div class="gimgs"><figure><img src="week02/KakaoTalk_20260405_002024080.jpg" alt=""><figcaption>활동</figcaption></figure><figure><img src="week02/스크린샷%202026-04-05%20002922.png" alt=""><figcaption class="alt">증빙</figcaption></figure></div></div>
+        <div class="gcard"><div class="gh"><span class="gw">3주차</span><span class="gt">DP·표절검사기</span></div>
+          <div class="gimgs"><figure><img src="week03/KakaoTalk_20260411_172810443.jpg" alt=""><figcaption>활동</figcaption></figure><figure><img src="week03/KakaoTalk_20260412_220237292.jpg" alt=""><figcaption class="alt">결과물</figcaption></figure></div></div>
+        <div class="gcard"><div class="gh"><span class="gw">4주차</span><span class="gt">CPU 스케줄링</span></div>
+          <div class="gimgs"><figure><img src="week04/KakaoTalk_20260418_130304926.jpg" alt=""><figcaption>활동</figcaption></figure><figure><img src="week04/스크린샷%202026-06-12%20230936.png" alt=""><figcaption class="alt">시뮬레이터</figcaption></figure><figure><img src="week04/스크린샷%202026-06-12%20231025.png" alt=""><figcaption class="alt">비교</figcaption></figure></div></div>
+        <div class="gcard"><div class="gh"><span class="gw">5주차</span><span class="gt">중간고사 대비</span></div>
+          <div class="gimgs"><figure><img src="week05/KakaoTalk_20260426_171527811.jpg" alt=""><figcaption>활동</figcaption></figure><figure><img src="week05/Algorithm_Exam_Study_Guide_Full_page-0001.jpg" alt=""><figcaption class="alt">알고리즘</figcaption></figure><figure><img src="week05/OS_Exam_Study_Guide_Full_page-0001.jpg" alt=""><figcaption class="alt">운영체제</figcaption></figure></div></div>
+        <div class="gcard"><div class="gh"><span class="gw">6주차</span><span class="gt">탐색 트리</span></div>
+          <div class="gimgs"><figure><img src="week06/KakaoTalk_20260503_204118322.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week06/스크린샷%202026-06-12%20231137.png" alt=""><figcaption class="alt">BST·RBT</figcaption></figure><figure><img src="week06/스크린샷%202026-06-12%20231204.png" alt=""><figcaption class="alt">B-트리</figcaption></figure></div></div>
+      </div>
+    </div>
+    <div class="pageno">09</div>
+  </section>
+
+  <!-- 10 §3 사진 갤러리 7-12 -->
+  <section class="slide band-warm">
+    <div class="pad">
+      <div class="kicker">03 · 주차별 학습 내용</div>
+      <div class="s-title">주차별 활동 · 결과물 사진 &nbsp;<span style="font-size:15px;font-weight:400;color:var(--muted);">7 ~ 12주차</span></div>
+      <div class="s-rule"></div>
+      <div class="gal" style="grid-template-columns:1fr 1fr 1fr;">
+        <div class="gcard"><div class="gh"><span class="gw">7주차</span><span class="gt">동기화</span></div>
+          <div class="gimgs"><figure><img src="week07/1.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week07/스크린샷%202026-06-12%20231249.png" alt=""><figcaption class="alt">Race</figcaption></figure><figure><img src="week07/스크린샷%202026-06-12%20231258.png" alt=""><figcaption class="alt">철학자</figcaption></figure></div></div>
+        <div class="gcard"><div class="gh"><span class="gw">8주차</span><span class="gt">V 모델</span></div>
+          <div class="gimgs"><figure><img src="week08/KakaoTalk_20260517_150607351.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week08/스크린샷%202026-06-12%20231318.png" alt=""><figcaption class="alt">V모델</figcaption></figure><figure><img src="week08/스크린샷%202026-06-12%20231324.png" alt=""><figcaption class="alt">체크리스트</figcaption></figure></div></div>
+        <div class="gcard"><div class="gh"><span class="gw">9주차</span><span class="gt">팀프로젝트 분석</span></div>
+          <div class="gimgs"><figure><img src="week09/1.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week09/스크린샷%202026-05-24%20165036.png" alt=""><figcaption class="alt">YouTube</figcaption></figure><figure><img src="week09/스크린샷%202026-06-12%20231346.png" alt=""><figcaption class="alt">파이프라인</figcaption></figure><figure><img src="week09/스크린샷%202026-06-12%20231351.png" alt=""><figcaption class="alt">매핑</figcaption></figure></div></div>
+        <div class="gcard"><div class="gh"><span class="gw">10주차</span><span class="gt">저장장치</span></div>
+          <div class="gimgs"><figure><img src="week10/스크린샷%202026-05-31%20193515%20(1).png" alt=""><figcaption>온라인1</figcaption></figure><figure><img src="week10/스크린샷%202026-05-31%20193535.png" alt=""><figcaption>온라인2</figcaption></figure><figure><img src="week10/스크린샷%202026-06-12%20231414.png" alt=""><figcaption class="alt">디스크</figcaption></figure><figure><img src="week10/스크린샷%202026-06-12%20231418.png" alt=""><figcaption class="alt">RAID</figcaption></figure></div></div>
+        <div class="gcard"><div class="gh"><span class="gw">11주차</span><span class="gt">알고리즘+LLM</span></div>
+          <div class="gimgs"><figure><img src="week11/KakaoTalk_20260607_202011807.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week11/기본화면.png" alt=""><figcaption class="alt">기본</figcaption></figure><figure><img src="week11/취향%20기반%20추천.png" alt=""><figcaption class="alt">추천</figcaption></figure><figure><img src="week11/채널%20추천.png" alt=""><figcaption class="alt">채널</figcaption></figure><figure><img src="week11/페르소나.png" alt=""><figcaption class="alt">페르소나</figcaption></figure></div></div>
+        <div class="gcard"><div class="gh"><span class="gw">12주차</span><span class="gt">xv6 멀티에이전트 OS</span></div>
+          <div class="gimgs"><figure><img src="week12/screenshot2.png" alt=""><figcaption class="alt">25콜</figcaption></figure><figure><img src="week12/screenshot3.png" alt=""><figcaption class="alt">트레이스</figcaption></figure></div></div>
+      </div>
+      <div class="note" style="margin-top:14px;">활동사진은 온라인 스터디 활동(화상 회의·공유 화면) 캡처도 인정된다(10주차 적용). 12주차 활동사진은 아직 준비되지 않아 추후 추가 예정이다.</div>
+    </div>
+    <div class="pageno">10</div>
+  </section>
+
+  <!-- 11 §4 노력1 -->
+  <section class="slide">
+    <div class="pad">
+      <div class="kicker">04 · 학습목표를 위한 노력 · 전략</div>
+      <div class="s-title">스터디 준비·진행·개선 &nbsp;·&nbsp; 역할·기준·규칙</div>
+      <div class="s-rule"></div>
+      <div class="cols2 grow" style="align-items:start;">
+        <div class="card" style="height:100%;">
+          <span class="tag">준비 · 진행 · 개선</span>
+          <ul class="b">
+            <li><b>고정 루틴</b> : 매주 오프라인으로 모여(3월말~6월, 회당 약 2~5시간) 개념 정리 → 코드/웹앱 구현 → 실행·검증 → 퀴즈/시험 대비 순으로 진행</li>
+            <li><b>이론과 구현의 연결</b> : 매 주차 배운 개념을 반드시 "동작하는 산출물"로 구현(Closest Pair 웹앱, 병렬 히스토그램, 표절검사기, 스케줄러 시뮬레이터 …)</li>
+            <li><b>개선</b> : 시험 대비 주차에는 오픈북 특성에 맞춰 교과서 정독·인덱싱 + NotebookLM 예상질문으로 전략을 전환하는 등, 매주 방식을 목표에 맞게 조정</li>
+          </ul>
+        </div>
+        <div class="card" style="height:100%;">
+          <span class="tag line">역할 · 기준 · 과제 · 규칙</span>
+          <ul class="b">
+            <li><b>역할 분배</b> : Frontend / Backend / LLM·Prompt / PM(일정·문서) 4개 축으로 분담(9주차 정립)</li>
+            <li><b>결과물 기준</b> : 모든 주차 활동을 <code>weekNN.md</code> 보고서 + 실행 가능한 코드/웹앱으로 남기는 것을 원칙으로 함</li>
+            <li><b>버전 관리 규칙</b> : 결과물을 팀 GitHub 레포지토리로 관리하고 주차별로 커밋하여 기록 누적</li>
+            <li><b>퀴즈·시험 대비 규칙</b> : 매주 퀴즈 오답을 공유하고 다음 주 출제 경향을 함께 예측·대비(2주차 퀴즈 전원 만점)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="pageno">11</div>
+  </section>
+
+  <!-- 12 §4 노력2 -->
+  <section class="slide band-warm">
+    <div class="pad">
+      <div class="kicker">04 · 학습목표를 위한 노력 · 전략</div>
+      <div class="s-title">학습 결과물 · 추가 활동 &nbsp;·&nbsp; 증빙</div>
+      <div class="s-rule"></div>
+      <div class="cols2" style="align-items:start;margin-bottom:16px;">
+        <div class="card">
+          <span class="tag">학습 결과물 정리본 · 추가 활동</span>
+          <ul class="b small">
+            <li><b>주차별 보고서</b> : <code>week01.md ~ week12.md</code></li>
+            <li><b>최종 프로젝트 2종</b> : Liberal_algorithm(알고리즘+LLM) · Liberal_OS(xv6 직접 수정, 신규 시스템 콜 12개(22–33)·regression 게이트·기술 보고서 포함)</li>
+            <li><b>실습 코드</b> : <code>histogram.c</code>, <code>matmul.c</code>·<code>mergesort.c</code>, 주차별 웹앱</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="tag line">그 외 노력 · 전략</span>
+          <ul class="b small">
+            <li><b>AI 협업 적극 활용</b> : Claude Code, Upstage Solar API, NVIDIA NIM으로 코드 리뷰·복잡도 최적화·문서화, 과정 로그를 학습 기록으로 남김</li>
+            <li><b>이론→실증의 정량화</b> : 암달의 법칙 speedup, 스케줄링 평균 대기/반환 시간, 알고리즘별 소요시간을 직접 측정·비교</li>
+          </ul>
+        </div>
+      </div>
+      <span class="tag" style="margin-bottom:10px;">증빙 — 최종 프로젝트 실행 결과</span>
+      <div class="gal" style="grid-template-columns:repeat(4,1fr);gap:14px;">
+        <div class="gcard"><div class="gimgs" style="grid-template-columns:1fr;"><figure style="height:150px;"><img src="week11/취향%20기반%20추천.png" alt=""><figcaption class="alt">Liberal_algorithm · 추천</figcaption></figure></div></div>
+        <div class="gcard"><div class="gimgs" style="grid-template-columns:1fr;"><figure style="height:150px;"><img src="week11/페르소나.png" alt=""><figcaption class="alt">Liberal_algorithm · 페르소나</figcaption></figure></div></div>
+        <div class="gcard"><div class="gimgs" style="grid-template-columns:1fr;"><figure style="height:150px;"><img src="week12/screenshot2.png" alt=""><figcaption class="alt">Liberal_OS · 25콜 파이프라인</figcaption></figure></div></div>
+        <div class="gcard"><div class="gimgs" style="grid-template-columns:1fr;"><figure style="height:150px;"><img src="week12/screenshot3.png" alt=""><figcaption class="alt">Liberal_OS · live 트레이스</figcaption></figure></div></div>
+      </div>
+      <div class="note" style="margin-top:14px;">그 외 증빙 — <b>학업 성과</b>: 알고리즘·운영체제 시험 대비 정리본(5주차) · <b>직접 구현 결과물 시각화</b>: 4·6·7·8·9·10주차 HTML 화면(§3 갤러리) · <b>GitHub</b>: 두 레포 커밋 이력·파일 트리 캡처</div>
+    </div>
+    <div class="pageno">12</div>
+  </section>
+
+  <!-- 13 §5 소감1 -->
+  <section class="slide">
+    <div class="pad">
+      <div class="kicker">05 · 활동 소감</div>
+      <div class="s-title">잘한 점 · 아쉬운 점 · 성과</div>
+      <div class="s-rule"></div>
+      <div class="cols2" style="align-items:start;margin-bottom:16px;">
+        <div class="card">
+          <span class="tag">잘한 점</span>
+          <ul class="b small">
+            <li>강의 개념을 매주 빠짐없이 동작하는 코드/시스템으로 옮겨 이론과 구현의 간극을 좁힘</li>
+            <li>단순 문제 풀이를 넘어 학기 말 <b>xv6 커널을 직접 수정</b>해 시스템 콜·스케줄러·동기화 구현까지 난이도를 끌어올림</li>
+            <li>모든 활동을 보고서와 GitHub 결과물로 남겨 학습 과정을 누적·추적</li>
+            <li>2년 공백(군휴학) 동안 달라진 AI 개발 환경을, AI를 실질적 생산 도구(LLM 하네스·AI 페어 프로그래밍)로 활용하며 빠르게 따라잡음</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="tag line">아쉬운 점</span>
+          <ul class="b small">
+            <li>Liberal_OS에서 proxy_lock 직렬화로 여러 LLM 에이전트의 호스트 호출을 진정한 병렬로 돌리지 못했고, live 모드 자동 검증·순차 baseline·결함 격리 테스트가 일부 보류됨</li>
+            <li>일부 주차는 시험·과제 일정과 겹쳐 결과물 완성도에 편차가 있었음</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="background:var(--gray);border-color:var(--hairline);">
+        <span class="tag">얻은 결과 · 성과</span>
+        <ul class="b small" style="columns:2;column-gap:32px;">
+          <li>알고리즘·운영체제 전공 개념을 실제 구현으로 체화 — 퀴즈 전원 만점·중간고사 대비 등 학업 성과로 연결</li>
+          <li>LLM 결합 완성 프로젝트 2종(Liberal_algorithm·Liberal_OS) 산출물 확보</li>
+          <li>"이론→구현→검증" 사이클과 AI 협업 워크플로우를 팀 표준 학습법으로 정착</li>
+        </ul>
+      </div>
+    </div>
+    <div class="pageno">13</div>
+  </section>
+
+  <!-- 14 §5 팀원별 소감 -->
+  <section class="slide band-warm">
+    <div class="pad">
+      <div class="kicker">05 · 활동 소감</div>
+      <div class="s-title">팀원별 활동 소감</div>
+      <div class="s-rule"></div>
+      <div class="cols2 grow" style="grid-auto-rows:1fr;">
+        <div class="card"><span class="tag">손한주 · 대표 / LLM 하네스</span><div class="small" style="line-height:1.62;">대표로서 매주 일정과 역할을 조율하며, 특히 12주차 Liberal_OS에서 AI 코딩 에이전트가 xv6 커널 개발을 자율 수행하도록 만드는 <b>하네스(자동 테스트·회귀 게이트·작업 루프)</b>를 설계한 경험이 가장 값졌다. AI를 개발 사이클을 굴리는 주체로 다루며 '하네스 엔지니어링'의 중요성을 체감했고, 끝까지 다듬지 못한 한계를 정직하게 기록하는 일도 실력의 일부임을 배웠다.</div></div>
+        <div class="card"><span class="tag">이태진 · 운영체제·시스템</span><div class="small" style="line-height:1.62;">추상적으로만 알던 운영체제 개념이 실제 코드에서 어떻게 구현되는지를 <b>xv6 소스(proc.c, scheduler, syscall)</b>를 직접 수정하며 확인한 점이 인상 깊었다. 시스템 콜 추가, 우선순위 스케줄러·메모리 쿼터 작업에서 저수준 디버깅의 어려움을 체감했고, 이론과 구현의 간극을 메우려면 더 깊은 시스템 이해가 필요함을 절실히 느꼈다.</div></div>
+        <div class="card"><span class="tag">송명준 · AI 활용·품질</span><div class="small" style="line-height:1.62;">Claude Code·Upstage Solar를 코드 리뷰·복잡도 최적화·문서화에 활용하며, 같은 도구라도 <b>어떻게 묻고 어떻게 검증하느냐</b>에 따라 결과 품질이 크게 달라짐을 배웠다. AI 제안을 그대로 신뢰하지 않고 테스트·벤치마크로 검증하는 습관을 들인 점이 잘한 부분이며, 효율과 정확성을 동시에 잡는 AI 활용법을 더 다듬고 싶다.</div></div>
+        <div class="card"><span class="tag">박상언 · 추천·AI 백엔드</span><div class="small" style="line-height:1.62;">11주차 Liberal_algorithm에서 <b>Union-Find 군집화·Kruskal 최대신장포레스트</b>로 취향 그래프를 만들고 그 위에 LLM 추천을 얹는 백엔드 파이프라인을 설계하며, 결정론적 수치 계산과 LLM 해석의 역할을 분리하는 설계 원칙을 체득했다. 추천 시스템·AI 백엔드의 전체 흐름을 직접 구현한 점이 값졌고, 추천 결과의 정량 평가는 더 보완이 필요하다고 느꼈다.</div></div>
+      </div>
+      <div class="note" style="margin-top:14px;">서로 다른 관심사(하네스·시스템·AI 활용·백엔드)를 가진 네 명이 한 주제를 각자의 시각에서 파고든 덕분에, 혼자서는 닿기 어려운 범위(웹앱부터 커널까지)를 한 학기에 함께 경험할 수 있었다.</div>
+    </div>
+    <div class="pageno">14</div>
+  </section>
+
+  <!-- 15 §6 계획1 -->
+  <section class="slide">
+    <div class="pad">
+      <div class="kicker">06 · 앞으로의 계획</div>
+      <div class="s-title">마무리 후 활동 · 앞으로의 계획</div>
+      <div class="s-rule"></div>
+      <div class="cols2 grow" style="align-items:start;">
+        <div class="card" style="height:100%;">
+          <span class="tag">스터디 마무리 후 활동 계획</span>
+          <ul class="b">
+            <li>기말고사 대비를 위해 6~12주차에서 다룬 <b>탐색 트리·동기화·저장장치·스케줄링</b> 개념을 종합 복습하고, 각 주차 결과물을 시험 관점에서 재정리한다.</li>
+          </ul>
+        </div>
+        <div class="card" style="height:100%;">
+          <span class="tag line">스터디를 통해 세운 앞으로의 계획</span>
+          <ul class="b">
+            <li><b>최종 프로젝트 고도화</b> : Liberal_OS의 향후 과제(순차 baseline 벤치, 결함 격리 테스트, virtio-serial 드라이버, 우선순위 라운드로빈/에이징, 실 LLM 병렬 호출)를 다음 학기 연계 주제로 발전</li>
+            <li><b>전공 심화</b>(시스템 프로그래밍/분산 시스템/AI 시스템)로 학습 범위를 확장하고, 스터디 운영 방식을 다음 학기에도 지속</li>
+            <li>각자의 개인 목표(LLM 하네스 · AI 서비스 백엔드 · 시스템 개발 · 효율적 AI 활용)에 맞춰 AI 기반 개발 역량을 지속적으로 심화</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="pageno">15</div>
+  </section>
+
+  <!-- 16 §6 팀원별 계획 -->
+  <section class="slide band-warm">
+    <div class="pad">
+      <div class="kicker">06 · 앞으로의 계획</div>
+      <div class="s-title">팀원별 향후 계획</div>
+      <div class="s-rule"></div>
+      <div class="cols2" style="grid-auto-rows:1fr;margin-bottom:16px;">
+        <div class="card"><span class="tag">손한주</span><div class="small" style="line-height:1.62;">LLM 하네스·에이전트 오케스트레이션을 더 깊이 공부해 Liberal_OS의 <b>live 모드 안정화·에이전트 평가 자동화</b>를 이어가고, AI가 주도하는 개발 워크플로우 설계 역량을 개발자로서의 기반으로 다질 계획이다.</div></div>
+        <div class="card"><span class="tag">이태진</span><div class="small" style="line-height:1.62;">시스템 프로그래밍·운영체제 후속 학습을 이어가 <b>virtio-serial 드라이버</b> 같은 커널 확장 과제에 도전하고, 저수준 코드를 직접 다루는 시스템 개발자로 성장하기 위한 기초를 다질 계획이다.</div></div>
+        <div class="card"><span class="tag">송명준</span><div class="small" style="line-height:1.62;">AI 협업 워크플로우를 팀 표준으로 정리하고, <b>테스트·검증 자동화와 코드 품질 도구</b>를 익혀 AI를 효율적이면서도 신뢰할 수 있게 쓰는 개발 습관을 굳힐 계획이다.</div></div>
+        <div class="card"><span class="tag">박상언</span><div class="small" style="line-height:1.62;">추천 시스템·AI 서비스 백엔드를 심화 학습해 Liberal_algorithm을 <b>API·데이터베이스를 갖춘 실제 서비스</b> 형태로 확장하고, LLM 기반 애플리케이션 개발자로 나아갈 계획이다.</div></div>
+      </div>
+      <div class="note">다음 학기에도 같은 팀으로 스터디를 이어가며, 이번에 만든 두 프로젝트(Liberal_algorithm·Liberal_OS)를 후배·동료에게 공유하는 발표·문서화 활동을 진행할 계획이다.</div>
+    </div>
+    <div class="pageno">16</div>
+  </section>
+
+  <!-- 17 CLOSING -->
+  <section class="slide band-crimson">
+    <div class="cover">
+      <div class="crest">KOREA UNIVERSITY · KUS-TUDY</div>
+      <div class="motto">LIBERTAS · JUSTITIA · VERITAS</div>
+      <div class="ck">감사합니다</div>
+      <h1 style="font-size:64px;">이론을 코드로,<br>코드를 커널까지</h1>
+      <div class="rule"></div>
+      <div class="who">
+        <b style="color:#fff;">Big O(S)</b> &nbsp;·&nbsp; 손한주 · 이태진 · 송명준 · 박상언<br>
+        <span style="font-size:14px;">결과물 · Liberal_algorithm &nbsp;<span style="opacity:.8;">github.com/HANJUSON/Liberal_algorithm</span></span><br>
+        <span style="font-size:14px;">결과물 · Liberal_OS &nbsp;<span style="opacity:.8;">github.com/HANJUSON/Liberal_OS</span></span><br>
+        <span style="font-size:13px;opacity:.78;">근거 자료 · 주차별 보고서 week01.md ~ week12.md · 주차별 실습 코드/웹앱</span>
+      </div>
+      <div class="date">2026.06.14</div>
+    </div>
+  </section>
+
+  </div><!-- /deck -->
+</div><!-- /stage -->
+
+<div id="hint">← → 또는 Space 로 이동 · F11 전체화면 · Ctrl+P 로 PDF 저장</div>
+<div id="nav">
+  <button id="prev" aria-label="이전">‹</button>
+  <span id="counter">01 / 17</span>
+  <button id="next" aria-label="다음">›</button>
+</div>
+
+<script>
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var deck = document.getElementById('deck');
+  var cur = 0;
+  function show(n){
+    cur = Math.max(0, Math.min(slides.length-1, n));
+    slides.forEach(function(s,i){ s.classList.toggle('active', i===cur); });
+    var pad2 = function(x){ return (x<10?'0':'')+x; };
+    document.getElementById('counter').textContent = pad2(cur+1)+' / '+pad2(slides.length);
+    document.getElementById('progress').style.width = ((cur+1)/slides.length*100)+'%';
+  }
+  function fit(){
+    var s = Math.min(window.innerWidth/1280, window.innerHeight/720);
+    deck.style.transform = 'scale('+s+')';
+  }
+  document.getElementById('next').onclick = function(){ show(cur+1); };
+  document.getElementById('prev').onclick = function(){ show(cur-1); };
+  window.addEventListener('keydown', function(e){
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){ show(cur+1); e.preventDefault(); }
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){ show(cur-1); e.preventDefault(); }
+    else if(e.key==='Home'){ show(0); }
+    else if(e.key==='End'){ show(slides.length-1); }
+  });
+  window.addEventListener('resize', fit);
+  fit(); show(0);
+</script>
+</body>
+</html>

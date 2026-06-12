@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Big O(S) · 6주차 · BST vs RBT 삽입 비교</title>
+<style>
+  :root{
+    --bg:#0f1422; --panel:#171e30; --panel2:#1d2742; --line:#2c3a5c;
+    --ink:#e8edf7; --sub:#9aa9c7; --accent:#5b8cff; --accent2:#7ce0c3;
+    --red:#e2453c; --black:#1b2336; --gold:#ffce5a; --ok:#56d18a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:linear-gradient(160deg,#0c1120,#121a2e 55%,#0d1426);
+    color:var(--ink);font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;}
+  header.bar{display:flex;align-items:center;gap:14px;padding:14px 26px;
+    background:linear-gradient(90deg,#16203a,#1d2b52);border-bottom:2px solid var(--accent);
+    box-shadow:0 4px 24px rgba(0,0,0,.4);}
+  .logo{font-weight:800;font-size:20px;letter-spacing:.5px;
+    background:linear-gradient(90deg,#7ce0c3,#5b8cff);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .crumbs{display:flex;gap:10px;align-items:center;color:var(--sub);font-size:14px;flex-wrap:wrap;}
+  .crumbs b{color:var(--ink);}
+  .pill{background:#233158;border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-size:13px;color:var(--accent2);}
+  .wrap{max-width:1280px;margin:0 auto;padding:22px 26px 60px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;
+    box-shadow:0 8px 28px rgba(0,0,0,.28);}
+  .card h2{margin:0 0 4px;font-size:16px;}
+  .card .desc{color:var(--sub);font-size:12.5px;margin:0 0 10px;line-height:1.5;}
+  .span2{grid-column:span 2;}
+  .span3{grid-column:span 3;}
+  .badge{display:inline-block;font-size:12px;padding:2px 9px;border-radius:6px;font-weight:700;margin-left:6px;}
+  .b-bst{background:#2a2140;color:#c9a8ff;border:1px solid #4b3a73;}
+  .b-rbt{background:#3a1d1d;color:#ffb4ad;border:1px solid #6e3531;}
+  .b-bad{background:#3a2616;color:#ffce9a;border:1px solid #6e4a26;}
+  svg{display:block;width:100%;height:auto;}
+  .node-lbl{font:700 15px system-ui;fill:#fff;}
+  .edge{stroke:#4a5b80;stroke-width:2.4;}
+  .nb{fill:var(--accent);stroke:#9fc0ff;stroke-width:2;}
+  .nred{fill:var(--red);stroke:#ff8b83;stroke-width:2;}
+  .nblk{fill:#222c45;stroke:#5d6f99;stroke-width:2.4;}
+  .axislbl{fill:var(--sub);font:600 12px system-ui;}
+  .hmetric{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
+  .metric{flex:1;min-width:120px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center;}
+  .metric .v{font-size:26px;font-weight:800;}
+  .metric .k{font-size:11.5px;color:var(--sub);margin-top:2px;}
+  ul.props{list-style:none;margin:0;padding:0;}
+  ul.props li{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed #2a3858;font-size:13px;line-height:1.45;}
+  ul.props li:last-child{border-bottom:none;}
+  .chk{flex:0 0 22px;height:22px;border-radius:6px;background:#163a2a;border:1px solid #2f6b4f;
+    color:var(--ok);font-weight:900;display:flex;align-items:center;justify-content:center;font-size:14px;}
+  .seq{font-family:"Consolas",monospace;background:#0c1426;border:1px solid var(--line);
+    border-radius:8px;padding:4px 10px;color:var(--accent2);font-weight:700;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:6px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dot{width:13px;height:13px;border-radius:50%;display:inline-block;border:2px solid;}
+  .calc{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.7;}
+  .calc code{color:var(--gold);font-family:Consolas,monospace;font-weight:700;}
+  .stepnote{font-size:12px;color:var(--sub);margin-top:8px;line-height:1.55;}
+  .stepnote b{color:#ffd28a;}
+  footer{text-align:center;color:var(--sub);font-size:12.5px;padding:20px;border-top:1px solid var(--line);margin-top:10px;}
+  h2 .tag{font-size:12px;color:var(--sub);font-weight:500;}
+</style>
+</head>
+<body>
+<header class="bar">
+  <span class="logo">Big O(S)</span>
+  <div class="crumbs">
+    <span class="pill">06주차</span>
+    <b>탐색 트리 완전정복 — BST vs RBT 삽입 비교</b>
+    <span>·</span><span>2026.05.03</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+
+    <!-- BST {7,3,8,1,5} -->
+    <div class="card">
+      <h2>① BST 삽입 <span class="badge b-bst">임의 순서</span></h2>
+      <p class="desc">빈 BST에 <span class="seq">{7, 3, 8, 1, 5}</span>를 순서대로 삽입한 최종 트리. 임의 순서이므로 균형에 가깝게 형성된다.</p>
+      <svg viewBox="0 0 340 230" role="img" aria-label="BST 트리">
+        <line class="edge" x1="170" y1="40" x2="100" y2="100"/>
+        <line class="edge" x1="170" y1="40" x2="240" y2="100"/>
+        <line class="edge" x1="100" y1="100" x2="55" y2="160"/>
+        <line class="edge" x1="100" y1="100" x2="145" y2="160"/>
+        <g><circle class="nb" cx="170" cy="40" r="22"/><text class="node-lbl" x="170" y="46" text-anchor="middle">7</text></g>
+        <g><circle class="nb" cx="100" cy="100" r="22"/><text class="node-lbl" x="100" y="106" text-anchor="middle">3</text></g>
+        <g><circle class="nb" cx="240" cy="100" r="22"/><text class="node-lbl" x="240" y="106" text-anchor="middle">8</text></g>
+        <g><circle class="nb" cx="55" cy="160" r="22"/><text class="node-lbl" x="55" y="166" text-anchor="middle">1</text></g>
+        <g><circle class="nb" cx="145" cy="160" r="22"/><text class="node-lbl" x="145" y="166" text-anchor="middle">5</text></g>
+      </svg>
+      <div class="hmetric">
+        <div class="metric"><div class="v">2</div><div class="k">트리 높이 (h)</div></div>
+        <div class="metric"><div class="v">5</div><div class="k">노드 수 (n)</div></div>
+      </div>
+    </div>
+
+    <!-- BST sorted {1..5} -->
+    <div class="card">
+      <h2>② BST 삽입 <span class="badge b-bad">정렬 입력</span></h2>
+      <p class="desc">동일 BST에 <span class="seq">{1, 2, 3, 4, 5}</span>를 오름차순으로 삽입 → 한쪽으로 치우친 <b>연결 리스트로 퇴화</b>, 높이 O(n).</p>
+      <svg viewBox="0 0 340 230" role="img" aria-label="퇴화 BST">
+        <line class="edge" x1="60" y1="34" x2="110" y2="74"/>
+        <line class="edge" x1="110" y1="74" x2="160" y2="114"/>
+        <line class="edge" x1="160" y1="114" x2="210" y2="154"/>
+        <line class="edge" x1="210" y1="154" x2="260" y2="194"/>
+        <g><circle class="nb" cx="60" cy="34" r="20"/><text class="node-lbl" x="60" y="40" text-anchor="middle">1</text></g>
+        <g><circle class="nb" cx="110" cy="74" r="20"/><text class="node-lbl" x="110" y="80" text-anchor="middle">2</text></g>
+        <g><circle class="nb" cx="160" cy="114" r="20"/><text class="node-lbl" x="160" y="120" text-anchor="middle">3</text></g>
+        <g><circle class="nb" cx="210" cy="154" r="20"/><text class="node-lbl" x="210" y="160" text-anchor="middle">4</text></g>
+        <g><circle class="nb" cx="260" cy="194" r="20"/><text class="node-lbl" x="260" y="200" text-anchor="middle">5</text></g>
+      </svg>
+      <div class="hmetric">
+        <div class="metric"><div class="v" style="color:var(--red)">4</div><div class="k">트리 높이 (h = n−1)</div></div>
+        <div class="metric"><div class="v" style="color:var(--red)">O(n)</div><div class="k">탐색/삽입 복잡도</div></div>
+      </div>
+    </div>
+
+    <!-- RBT {7,3,8,1,5} -->
+    <div class="card">
+      <h2>③ RBT 삽입 <span class="badge b-rbt">색상 1비트</span></h2>
+      <p class="desc">동일 시퀀스 <span class="seq">{7, 3, 8, 1, 5}</span>를 RBT에 삽입. 재채색·구조 재편으로 균형이 강제 유지된다.</p>
+      <svg viewBox="0 0 340 230" role="img" aria-label="RBT 트리">
+        <line class="edge" x1="170" y1="40" x2="100" y2="100"/>
+        <line class="edge" x1="170" y1="40" x2="240" y2="100"/>
+        <line class="edge" x1="100" y1="100" x2="55" y2="160"/>
+        <line class="edge" x1="100" y1="100" x2="145" y2="160"/>
+        <g><circle class="nblk" cx="170" cy="40" r="22"/><text class="node-lbl" x="170" y="46" text-anchor="middle">7</text></g>
+        <g><circle class="nblk" cx="100" cy="100" r="22"/><text class="node-lbl" x="100" y="106" text-anchor="middle">3</text></g>
+        <g><circle class="nblk" cx="240" cy="100" r="22"/><text class="node-lbl" x="240" y="106" text-anchor="middle">8</text></g>
+        <g><circle class="nred" cx="55" cy="160" r="22"/><text class="node-lbl" x="55" y="166" text-anchor="middle">1</text></g>
+        <g><circle class="nred" cx="145" cy="160" r="22"/><text class="node-lbl" x="145" y="166" text-anchor="middle">5</text></g>
+      </svg>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--red);border-color:#ff8b83;"></i>빨강 노드</span>
+        <span><i class="dot" style="background:#222c45;border-color:#5d6f99;"></i>검정 노드</span>
+      </div>
+      <div class="hmetric">
+        <div class="metric"><div class="v" style="color:var(--accent2)">2</div><div class="k">트리 높이 (h)</div></div>
+        <div class="metric"><div class="v" style="color:var(--accent2)">O(log n)</div><div class="k">최악 보장</div></div>
+      </div>
+    </div>
+
+    <!-- RBT 5 properties -->
+    <div class="card span2">
+      <h2>RBT 5속성 체크리스트 <span class="tag">— 삽입 완료 후 전수 검증</span></h2>
+      <p class="desc">속성 4와 5가 협력하여 가장 긴 경로(빨강-검정 교대)가 가장 짧은 경로(전체 검정)의 최대 2배를 넘지 못하도록 제한한다.</p>
+      <ul class="props">
+        <li><span class="chk">✓</span><span><b>속성 1.</b> 모든 노드는 빨강 또는 검정이다. → 5개 노드 모두 색 지정 완료.</span></li>
+        <li><span class="chk">✓</span><span><b>속성 2.</b> 루트는 검정이다. → 루트 7은 검정.</span></li>
+        <li><span class="chk">✓</span><span><b>속성 3.</b> 모든 리프(NIL)는 검정이다.</span></li>
+        <li><span class="chk">✓</span><span><b>속성 4.</b> 빨간 노드의 두 자식은 모두 검정이다(연속된 빨강 불허). → 빨강 1·5의 자식은 NIL(검정).</span></li>
+        <li><span class="chk">✓</span><span><b>속성 5.</b> 임의의 노드에서 모든 하위 리프로 향하는 경로의 검정 노드 수가 동일하다. → 흑색 높이 bh(root)=2 일정.</span></li>
+      </ul>
+    </div>
+
+    <!-- 2log2(n+1) bound -->
+    <div class="card">
+      <h2>높이 한계 검증 <span class="tag">n = 5</span></h2>
+      <p class="desc">RBT 높이는 항상 <code>h ≤ 2log₂(n+1)</code>. n=5일 때 수치로 확인.</p>
+      <div class="calc">
+        <code>h ≤ 2·log₂(n+1)</code><br>
+        = 2 · log₂(5+1)<br>
+        = 2 · log₂(6)<br>
+        = 2 · 2.585<br>
+        = <code>5.17</code> 이하<br>
+        <span style="color:var(--ok);font-weight:700;">실제 RBT 높이 = 2 ≤ 5.17 ✓</span>
+      </div>
+      <div class="stepnote">
+        <b>근거:</b> 흑색 높이 bh(root) ≥ h/2 이고 n ≥ 2^(h/2) − 1 이므로
+        h ≤ 2log₂(n+1) 이 성립한다.
+      </div>
+    </div>
+
+    <!-- height comparison bar -->
+    <div class="card span3">
+      <h2>세 트리 높이 비교 <span class="tag">— 삽입 순서·균형 여부에 따른 높이 차이</span></h2>
+      <p class="desc">동일한 노드 수(n=5)라도 균형 보장 여부에 따라 높이가 2배 이상 벌어진다. 막대 길이가 곧 최악 탐색 비용이다.</p>
+      <svg viewBox="0 0 980 200" role="img" aria-label="높이 비교 막대그래프">
+        <!-- baseline -->
+        <line x1="150" y1="20" x2="150" y2="180" stroke="#2c3a5c" stroke-width="1.5"/>
+        <!-- gridlines -->
+        <g stroke="#22304e" stroke-width="1">
+          <line x1="150" y1="20" x2="940" y2="20"/>
+          <line x1="150" y1="60" x2="940" y2="60"/>
+          <line x1="150" y1="100" x2="940" y2="100"/>
+          <line x1="150" y1="140" x2="940" y2="140"/>
+          <line x1="150" y1="180" x2="940" y2="180"/>
+        </g>
+        <g class="axislbl" text-anchor="end">
+          <text x="142" y="184">0</text><text x="142" y="144">1</text>
+          <text x="142" y="104">2</text><text x="142" y="64">3</text><text x="142" y="24">4</text>
+        </g>
+        <!-- BST random h=2 -->
+        <rect x="200" y="100" width="150" height="80" rx="6" fill="#7c6bd6"/>
+        <text x="275" y="92" text-anchor="middle" class="axislbl" fill="#cbbcff" font-weight="700">h = 2</text>
+        <text x="275" y="196" text-anchor="middle" class="axislbl">BST · 임의 {7,3,8,1,5}</text>
+        <!-- RBT h=2 -->
+        <rect x="430" y="100" width="150" height="80" rx="6" fill="#e2453c"/>
+        <text x="505" y="92" text-anchor="middle" class="axislbl" fill="#ffb4ad" font-weight="700">h = 2</text>
+        <text x="505" y="196" text-anchor="middle" class="axislbl">RBT · {7,3,8,1,5}</text>
+        <!-- BST sorted h=4 -->
+        <rect x="660" y="20" width="150" height="160" rx="6" fill="#3f4f70"/>
+        <text x="735" y="14" text-anchor="middle" class="axislbl" fill="#ffce9a" font-weight="700">h = 4 (퇴화)</text>
+        <text x="735" y="196" text-anchor="middle" class="axislbl">BST · 정렬 {1,2,3,4,5}</text>
+      </svg>
+      <div class="legend">
+        <span><i class="dot" style="background:#7c6bd6;border-color:#7c6bd6;"></i>BST 임의 입력 — 운에 의존</span>
+        <span><i class="dot" style="background:#e2453c;border-color:#e2453c;"></i>RBT — 최악에도 O(log n) 보장</span>
+        <span><i class="dot" style="background:#3f4f70;border-color:#3f4f70;"></i>BST 정렬 입력 — O(n) 퇴화</span>
+      </div>
+    </div>
+
+  </div>
+  <footer>KUS-TUDY · Big O(S) 스터디 활동 증빙 자료</footer>
+</div>
+
+<script>
+// 로드 즉시 완성 상태를 보장한다. (모든 트리/그래프는 정적 SVG로 그려져 있음)
+// 추가 인터랙션: 막대그래프 강조 토글 — 기본 상태에서도 완전한 그림이 보인다.
+(function(){
+  const facts = {
+    bstRandomH: 2, rbtH: 2, bstSortedH: 4, n: 5,
+    bound: (2*Math.log2(6)).toFixed(2)
+  };
+  // 콘솔에 핵심 수치 기록(증빙 일관성용)
+  console.log('[Big O(S) 6주차] BST 임의 h='+facts.bstRandomH+
+    ', RBT h='+facts.rbtH+', BST 정렬 h='+facts.bstSortedH+
+    ', 2log2(n+1)='+facts.bound+' (n='+facts.n+')');
+})();
+</script>
+</body>
+</html>

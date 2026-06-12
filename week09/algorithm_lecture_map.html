@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>알고리즘 ↔ 강의 주차 매핑 보드 · 09주차</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --line:#2b3340;
+    --ink:#e6edf3; --muted:#8b97a7; --accent:#5b8cff; --accent2:#ff4757;
+    --green:#3fb950; --yellow:#e3b341; --pink:#ff6b9d; --cyan:#39c5cf;
+    --r:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Segoe UI",sans-serif;
+    background:radial-gradient(1200px 600px at 20% -10%,#16203a 0%,var(--bg) 60%);
+    color:var(--ink);padding:24px;min-height:100vh;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1280px;margin:0 auto}
+  header.bar{
+    display:flex;align-items:center;gap:14px;padding:16px 22px;
+    background:linear-gradient(90deg,#5b8cff 0%,#7d6bff 50%,#ff4757 100%);
+    border-radius:var(--r);box-shadow:0 8px 30px rgba(91,140,255,.18);
+  }
+  .bar .logo{font-weight:800;font-size:20px;letter-spacing:.5px;color:#fff;
+    background:rgba(0,0,0,.22);padding:6px 12px;border-radius:9px}
+  .bar .crumbs{display:flex;gap:10px;align-items:center;color:#fff;font-weight:600;flex-wrap:wrap}
+  .bar .crumbs .sep{opacity:.6}
+  .bar .date{margin-left:auto;color:#fff;font-weight:600;background:rgba(0,0,0,.18);
+    padding:6px 12px;border-radius:9px;font-size:14px}
+
+  .sectitle{display:flex;align-items:center;gap:10px;margin:22px 4px 12px}
+  .sectitle h2{font-size:18px;font-weight:800}
+  .sectitle .tag{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:3px 10px;border-radius:20px}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+
+  /* 매핑 보드 */
+  .mapwrap{position:relative}
+  .mapgrid{display:grid;grid-template-columns:1fr 120px 1fr;gap:0;align-items:stretch}
+  .colhead{font-size:12px;letter-spacing:1px;color:var(--muted);font-weight:700;text-transform:uppercase;
+    padding:4px 6px 10px;text-align:center}
+  .col{display:flex;flex-direction:column;gap:10px;z-index:2}
+  .node{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 13px;
+    display:flex;align-items:center;gap:10px}
+  .node .ico{font-size:18px}
+  .node .t{font-weight:700;font-size:14px}
+  .node .c{font-family:"Consolas","Courier New",monospace;font-size:11.5px;color:var(--muted);margin-left:auto}
+  .node.lec .wk{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:13px;color:#fff;flex-shrink:0}
+  .node.lec .sub{font-size:11.5px;color:var(--muted)}
+  .leftcol .node{border-left:3px solid var(--accent)}
+  .rightcol .node{justify-content:flex-start}
+  #links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+  .midcol{display:flex;align-items:center;justify-content:center}
+
+  /* 하단 3분할 */
+  .grid3{display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-top:8px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-size:11.5px;letter-spacing:.5px;text-transform:uppercase}
+  td .role{font-weight:700}
+  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:700}
+  .b-fe{background:rgba(63,185,80,.15);color:#3fb950}
+  .b-be{background:rgba(91,140,255,.15);color:#5b8cff}
+  .b-llm{background:rgba(255,107,157,.15);color:#ff6b9d}
+  .b-pm{background:rgba(227,179,65,.15);color:#e3b341}
+
+  /* 체크리스트 */
+  .check{display:flex;flex-direction:column;gap:10px}
+  .ck{display:flex;align-items:flex-start;gap:11px;font-size:13.5px;line-height:1.4}
+  .ck .box{width:20px;height:20px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:800}
+  .ck.done .box{background:var(--green);color:#072}
+  .ck.todo .box{background:#222b38;border:1px solid var(--line);color:var(--muted)}
+  .ck .meta{color:var(--muted);font-size:11.5px;display:block;margin-top:2px}
+  .ck b{color:var(--ink)}
+
+  /* LLM 아이디어 카드 */
+  .llmgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:8px}
+  .llm{background:linear-gradient(160deg,#1c2330,#161b22);border:1px solid var(--line);border-radius:12px;padding:15px}
+  .llm .ic{font-size:24px}
+  .llm h4{font-size:14.5px;margin:8px 0 6px}
+  .llm p{font-size:12px;color:var(--muted);line-height:1.55}
+  .llm .src{margin-top:9px;font-size:11px;color:var(--cyan);font-weight:600}
+
+  /* 도구 칩 */
+  .tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .tool{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 13px;
+    display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600}
+  .tool .dot{width:9px;height:9px;border-radius:50%}
+
+  footer{margin-top:26px;text-align:center;color:var(--muted);font-size:12.5px;
+    border-top:1px solid var(--line);padding-top:16px;letter-spacing:.4px}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted)}
+  .legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <div class="logo">Big O(S)</div>
+    <div class="crumbs">
+      <span class="sep">·</span><span>09주차</span>
+      <span class="sep">·</span><span>팀 프로젝트의 알고리즘 분석</span>
+    </div>
+    <div class="date">2026.05.24</div>
+  </header>
+
+  <!-- 매핑 보드 -->
+  <div class="sectitle">
+    <h2>알고리즘 ↔ 강의 주차 매핑 보드</h2>
+    <span class="tag">프로젝트 코드 ↔ 강의 개념 1:1 대조</span>
+    <span class="tag">README 알고리즘 목록 기준</span>
+  </div>
+
+  <div class="card mapwrap">
+    <div class="mapgrid">
+      <div class="colhead">프로젝트에서 사용한 알고리즘 (app.py)</div>
+      <div class="colhead">연결</div>
+      <div class="colhead">강의 주차 / 개념</div>
+    </div>
+    <div class="mapgrid" style="position:relative">
+      <svg id="links"></svg>
+      <!-- 좌: 알고리즘 -->
+      <div class="col leftcol">
+        <div class="node" id="L0"><span class="ico">🗂️</span><span class="t">Heap Sort 정렬</span><span class="c">O(n log n)</span></div>
+        <div class="node" id="L1"><span class="ico">🔎</span><span class="t">Binary Search 분류</span><span class="c">O(log k)</span></div>
+        <div class="node" id="L2"><span class="ico">⚡</span><span class="t">LRU 캐시 (OrderedDict)</span><span class="c">O(1)</span></div>
+        <div class="node" id="L3"><span class="ico">📉</span><span class="t">Recency Decay</span><span class="c">O(n)</span></div>
+        <div class="node" id="L4"><span class="ico">📐</span><span class="t">Min-Max 정규화</span><span class="c">O(n)</span></div>
+        <div class="node" id="L5"><span class="ico">⚖️</span><span class="t">활동 가중치 합산</span><span class="c">O(n)</span></div>
+      </div>
+      <div class="midcol"></div>
+      <!-- 우: 강의 -->
+      <div class="col rightcol">
+        <div class="node lec" id="R0"><span class="wk" style="background:#ff6b9d">7주</span><div><div class="t">정렬 알고리즘</div><span class="sub">Heap / Merge / Quick</span></div></div>
+        <div class="node lec" id="R1"><span class="wk" style="background:#e3b341">4주</span><div><div class="t">분할 정복</div><span class="sub">이진 탐색 · 경계 분할</span></div></div>
+        <div class="node lec" id="R2"><span class="wk" style="background:#39c5cf">6주</span><div><div class="t">해싱 / 자료구조</div><span class="sub">OrderedDict · O(1) 접근</span></div></div>
+        <div class="node lec" id="R3"><span class="wk" style="background:#5b8cff">8주</span><div><div class="t">동적 계획법</div><span class="sub">가중·감쇠 누적 점화</span></div></div>
+        <div class="node lec" id="R4"><span class="wk" style="background:#3fb950">2주</span><div><div class="t">기초 자료/스케일링</div><span class="sub">선형 정규화</span></div></div>
+        <div class="node lec" id="R5"><span class="wk" style="background:#b07cff">5주</span><div><div class="t">탐욕법 / 누적합</div><span class="sub">가중치 누적</span></div></div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i style="background:#ff6b9d"></i>Heap Sort → 7주차 정렬</span>
+      <span><i style="background:#e3b341"></i>Binary Search → 4주차 분할 정복</span>
+      <span><i style="background:#39c5cf"></i>LRU 캐시 → 6주차 해싱/자료구조</span>
+    </div>
+  </div>
+
+  <!-- 팀 역할표 + 체크리스트 -->
+  <div class="grid3">
+    <div class="card">
+      <div class="sectitle" style="margin-top:0"><h2 style="font-size:16px">팀 역할 분배표</h2><span class="tag">3~4인 · 복수역할 허용</span></div>
+      <table>
+        <thead><tr><th>역할</th><th>주요 책임</th><th>담당 산출물</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge b-fe">Frontend</span></td>
+            <td>업로드 UI · 점수 시각화 · 그룹 뱃지</td><td class="role">static/app.js</td></tr>
+          <tr><td><span class="badge b-be">Backend</span></td>
+            <td>점수 파이프라인 · 캐시 · API 라우팅</td><td class="role">app.py (224줄)</td></tr>
+          <tr><td><span class="badge b-llm">LLM·Prompt</span></td>
+            <td>Solar 프롬프트 설계 · 요약/태깅 결합</td><td class="role">prompt/ 모듈</td></tr>
+          <tr><td><span class="badge b-pm">PM</span></td>
+            <td>레포 관리 · 일정 · API 신청 추적</td><td class="role">제출물/역할표</td></tr>
+        </tbody>
+      </table>
+      <p style="color:var(--muted);font-size:12px;margin-top:12px;line-height:1.6">
+        제출물: <b style="color:var(--ink)">팀명 / 멤버 / 레포 URL / 역할표</b> + 한 단락 주제 요약 + 핵심 기능 3개.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="sectitle" style="margin-top:0"><h2 style="font-size:16px">프로젝트 킥오프 체크리스트</h2><span class="tag" id="ckTag">3 / 5 완료</span></div>
+      <div class="check" id="checklist">
+        <div class="ck done"><div class="box">✓</div><div><b>GitHub 팀 레포 생성</b><span class="meta">study/ 폴더 포함 · 9주차 학습기록 커밋</span></div></div>
+        <div class="ck done"><div class="box">✓</div><div><b>Upstage Solar API 신청</b><span class="meta">AI Initiative 2025 이벤트 신청 완료</span></div></div>
+        <div class="ck done"><div class="box">✓</div><div><b>Claude Code 1개월 라이선스 수령</b><span class="meta">담당자 지정 · 코딩테스트 협업 활용</span></div></div>
+        <div class="ck todo"><div class="box">·</div><div><b>NVIDIA NIM 신청</b><span class="meta">추론 가속 백엔드 · 담당자 배정 대기</span></div></div>
+        <div class="ck todo"><div class="box">·</div><div><b>주제 요약 + 핵심 기능 3개 확정</b><span class="meta">팀 제출물 초안 검토 중</span></div></div>
+      </div>
+      <div class="tools">
+        <div class="tool"><span class="dot" style="background:#ff4757"></span>Upstage Solar API</div>
+        <div class="tool"><span class="dot" style="background:#76b900"></span>NVIDIA NIM</div>
+        <div class="tool"><span class="dot" style="background:#5b8cff"></span>Claude Code</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LLM 결합 아이디어 -->
+  <div class="sectitle">
+    <h2>LLM(Upstage Solar) 결합 아이디어</h2>
+    <span class="tag">YouTube 분석기 + 생성형 가치 추가</span>
+  </div>
+  <div class="llmgrid">
+    <div class="llm">
+      <div class="ic">📝</div>
+      <h4>시청 패턴 요약</h4>
+      <p>watch-history.json과 점수 분포를 Solar에 전달해 "최근 3개월 어떤 분야를 집중적으로 봤는지"를 자연어 한 단락으로 요약 생성.</p>
+      <div class="src">입력: 정규화 점수 + 시청 기록</div>
+    </div>
+    <div class="llm">
+      <div class="ic">🏷️</div>
+      <h4>관심 카테고리 자동 태깅</h4>
+      <p>채널 메타데이터를 기반으로 "음악/개발/게임/교육" 등 관심 카테고리를 Solar가 자동 태깅하여 4그룹 분류를 의미 단위로 보강.</p>
+      <div class="src">출력: 카테고리 태그 + 신뢰도</div>
+    </div>
+    <div class="llm">
+      <div class="ic">💬</div>
+      <h4>추천 큐레이션 코멘트</h4>
+      <p>🔥 열성 팬 / 🌱 잠수 그룹별로 "다시 볼만한 채널" 추천 코멘트를 Solar가 생성해 단순 점수표를 액션 가능한 인사이트로 전환.</p>
+      <div class="src">그룹 맞춤 큐레이션</div>
+    </div>
+  </div>
+
+  <footer>KUS-TUDY · Big O(S) 스터디 활동 증빙 자료</footer>
+</div>
+
+<script>
+  // 좌측 알고리즘 → 우측 강의 연결선 (각 인덱스 1:1)
+  var pairs=[
+    {l:'L0',r:'R0',c:'#ff6b9d'},
+    {l:'L1',r:'R1',c:'#e3b341'},
+    {l:'L2',r:'R2',c:'#39c5cf'},
+    {l:'L3',r:'R3',c:'#5b8cff'},
+    {l:'L4',r:'R4',c:'#3fb950'},
+    {l:'L5',r:'R5',c:'#b07cff'}
+  ];
+  function drawLinks(){
+    var svg=document.getElementById('links');
+    var host=svg.parentNode.getBoundingClientRect();
+    svg.setAttribute('width',host.width);
+    svg.setAttribute('height',host.height);
+    svg.innerHTML='';
+    pairs.forEach(function(p){
+      var a=document.getElementById(p.l).getBoundingClientRect();
+      var b=document.getElementById(p.r).getBoundingClientRect();
+      var x1=a.right-host.left, y1=a.top-host.top+a.height/2;
+      var x2=b.left-host.left, y2=b.top-host.top+b.height/2;
+      var mx=(x1+x2)/2;
+      var path=document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d','M '+x1+' '+y1+' C '+mx+' '+y1+', '+mx+' '+y2+', '+x2+' '+y2);
+      path.setAttribute('stroke',p.c);
+      path.setAttribute('stroke-width','2.4');
+      path.setAttribute('fill','none');
+      path.setAttribute('opacity','0.9');
+      svg.appendChild(path);
+      [{x:x1,y:y1},{x:x2,y:y2}].forEach(function(pt){
+        var c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+        c.setAttribute('cx',pt.x);c.setAttribute('cy',pt.y);c.setAttribute('r','4');
+        c.setAttribute('fill',p.c);
+        svg.appendChild(c);
+      });
+    });
+  }
+  drawLinks();
+  window.addEventListener('resize',drawLinks);
+  window.addEventListener('load',drawLinks);
+</script>
+</body>
+</html>

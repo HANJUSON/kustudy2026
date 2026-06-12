@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAID 레벨 비교 대시보드 · Big O(S) 10주차</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#2a3240;
+    --txt:#e6edf3; --sub:#9aa7b6; --accent:#4f9cff; --green:#3fb950;
+    --red:#f85149; --yellow:#e3b341; --purple:#bc8cff; --orange:#ff8a4f; --cyan:#39d0d8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--txt);
+    font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;}
+  .wrap{max-width:1200px;margin:0 auto;padding:18px 22px 40px;}
+  header.top{display:flex;align-items:center;gap:14px;padding:14px 20px;border-radius:14px;
+    background:linear-gradient(100deg,#15233b 0%,#1a2030 60%,#221a2e 100%);
+    border:1px solid var(--line);margin-bottom:18px;box-shadow:0 4px 18px rgba(0,0,0,.35);}
+  .logo{width:42px;height:42px;border-radius:11px;flex:0 0 auto;
+    background:linear-gradient(135deg,var(--accent),var(--purple));
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;letter-spacing:.5px;}
+  .htext{display:flex;flex-direction:column;line-height:1.35}
+  .htext .crumbs{font-size:12.5px;color:var(--sub);font-weight:600}
+  .htext .crumbs b{color:var(--accent)}
+  .htext .title{font-size:18px;font-weight:800;letter-spacing:-.3px}
+  .spacer{flex:1}
+  .hdate{font-size:12.5px;color:var(--sub);background:#0e1420;border:1px solid var(--line);
+    padding:6px 12px;border-radius:20px;font-weight:600}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:16px}
+  .card h2{font-size:14px;letter-spacing:.3px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .card h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  .card .sub{font-size:12px;color:var(--sub);margin-bottom:14px;line-height:1.6}
+
+  /* RAID layout cards */
+  .raidgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .raid{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:13px 14px;position:relative}
+  .raid .name{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}
+  .raid .name .tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;color:#0d1117}
+  .raid .blurb{font-size:11px;color:var(--sub);margin:6px 0 10px;line-height:1.55;min-height:30px}
+  .disks{display:flex;gap:9px;justify-content:center;margin:6px 0 4px;flex-wrap:wrap}
+  .disk{width:42px;text-align:center}
+  .disk svg{display:block;margin:0 auto}
+  .disk .dl{font-size:9px;color:var(--sub);margin-top:2px;font-family:"Consolas",monospace}
+  .minigrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+  .mini{background:#0c111a;border:1px solid var(--line);border-radius:8px;padding:6px 8px;text-align:center}
+  .mini .k{font-size:9.5px;color:var(--sub)}
+  .mini .v{font-size:13px;font-weight:800;margin-top:1px}
+
+  /* comparison table */
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{padding:9px 8px;text-align:center;border-bottom:1px solid var(--line)}
+  th{color:var(--sub);font-weight:700;font-size:11.5px;background:#0e1420}
+  td.lv{text-align:left;font-weight:800}
+  td .chip{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px;vertical-align:middle}
+  .rate{display:inline-flex;gap:3px;align-items:center}
+  .rate i{width:8px;height:13px;border-radius:2px;background:#243042;display:inline-block}
+  .rate i.f{background:var(--green)}
+  .rate i.fy{background:var(--yellow)}
+  .rate i.fr{background:var(--red)}
+  .tol-0{color:var(--red);font-weight:800}
+  .tol-p{color:var(--green);font-weight:800}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .focus{background:linear-gradient(135deg,rgba(248,81,73,.10),rgba(63,185,80,.08));
+    border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .focus h3{font-size:13px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .focus .flow{display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap}
+  .fbox{flex:1;min-width:130px;background:#0c111a;border:1px solid var(--line);border-radius:10px;padding:10px}
+  .fbox .ft{font-size:12px;font-weight:800;margin-bottom:4px}
+  .fbox .fd{font-size:11px;color:var(--sub);line-height:1.55}
+  .arrow{font-size:20px;color:var(--accent);font-weight:800}
+  .bad{color:var(--red)} .good{color:var(--green)}
+
+  /* HDD vs SSD */
+  .hsgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .hs{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .hs .ht{font-size:14px;font-weight:800;display:flex;align-items:center;gap:9px;margin-bottom:10px}
+  .hs .ht .ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center}
+  .hs ul{list-style:none}
+  .hs li{font-size:12px;color:var(--sub);padding:5px 0;display:flex;gap:8px;line-height:1.5;border-bottom:1px dashed #232c39}
+  .hs li:last-child{border:0}
+  .hs li b{color:var(--txt);font-weight:700;flex:0 0 78px}
+  .calc{background:#0c111a;border:1px solid var(--line);border-radius:11px;padding:14px 16px;margin-top:14px}
+  .calc h3{font-size:13px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .calcrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px}
+  .term{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 12px;text-align:center;flex:1;min-width:120px}
+  .term .tk{font-size:10.5px;color:var(--sub)}
+  .term .tv{font-size:16px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
+  .op{font-size:18px;font-weight:800;color:var(--sub)}
+  .total{background:rgba(79,156,255,.14);border-color:var(--accent)}
+  .total .tv{color:var(--accent)}
+  .calc .ex{font-size:11px;color:var(--sub);margin-top:10px;line-height:1.7}
+  .calc .ex code{background:#161b22;border:1px solid var(--line);padding:1px 6px;border-radius:5px;color:var(--cyan);font-family:Consolas,monospace}
+
+  footer{margin-top:8px;text-align:center;font-size:12px;color:var(--sub);
+    padding-top:14px;border-top:1px solid var(--line)}
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;
+    background:#0e1420;border:1px solid var(--line);color:var(--sub);margin-left:6px}
+  @media(max-width:900px){.raidgrid{grid-template-columns:repeat(2,1fr)}.two,.hsgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">O(S)</div>
+    <div class="htext">
+      <div class="crumbs"><b>Big O(S)</b> · 10주차 · RAID 레벨 비교 대시보드</div>
+      <div class="title">RAID 0·1·4·5·6·10 구성과 스토리지 특성 비교</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="hdate">2026.05.30</div>
+  </header>
+
+  <!-- RAID layout cards -->
+  <div class="card">
+    <h2><span class="dot"></span>RAID 레벨별 디스크 배치 (D=데이터 · M=미러 · P=패리티 · Q=2차패리티)</h2>
+    <div class="sub">스트라이핑·미러링·패리티 조합에 따른 디스크 구성. 패리티 블록은 노란색, 미러 사본은 보라색으로 표시.</div>
+    <div class="raidgrid" id="raidgrid"></div>
+  </div>
+
+  <!-- comparison table -->
+  <div class="card">
+    <h2><span class="dot" style="background:var(--green)"></span>용량 효율 · 신뢰성 · 읽기/쓰기 성능 비교표</h2>
+    <div class="sub">최소 디스크 N개 기준. 신뢰성=동시에 허용 가능한 디스크 장애 수. 성능 막대는 상대적 처리량.</div>
+    <table>
+      <thead><tr>
+        <th>RAID 레벨</th><th>구성 방식</th><th>최소 디스크</th><th>용량 효율</th>
+        <th>허용 장애 수</th><th>읽기 성능</th><th>쓰기 성능</th>
+      </tr></thead>
+      <tbody id="tbl"></tbody>
+    </table>
+  </div>
+
+  <!-- two focus panels -->
+  <div class="two">
+    <div class="card" style="margin:0">
+      <h2><span class="dot" style="background:var(--yellow)"></span>RAID 4 패리티 병목 → RAID 5 분산 패리티</h2>
+      <div class="focus">
+        <div class="flow">
+          <div class="fbox">
+            <div class="ft">RAID 4 <span class="bad">병목</span></div>
+            <div class="fd">패리티를 <b>전용 디스크 1개</b>에 몰아 저장.
+              모든 쓰기가 같은 패리티 디스크를 갱신해야 하므로 그 디스크가 <span class="bad">단일 병목</span>이 된다.</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="fbox">
+            <div class="ft">RAID 5 <span class="good">분산</span></div>
+            <div class="fd">패리티를 <b>모든 디스크에 분산</b> 저장.
+              쓰기 부하가 분산되어 병목이 사라지고 <span class="good">쓰기 병렬성</span>이 향상된다.</div>
+          </div>
+        </div>
+        <div style="font-size:11.5px;color:var(--sub);line-height:1.7;margin-top:4px">
+          RAID 6은 서로 다른 두 패리티(P·Q)를 분산 저장해 <b style="color:var(--txt)">동시 2개</b> 디스크 장애까지 견딘다.
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin:0">
+      <h2><span class="dot" style="background:var(--purple)"></span>RAID 0+1 vs RAID 10 — 복구 범위 차이</h2>
+      <div class="focus" style="background:linear-gradient(135deg,rgba(188,140,255,.10),rgba(79,156,255,.08))">
+        <div class="flow">
+          <div class="fbox">
+            <div class="ft">RAID 0+1 <span class="bad">취약</span></div>
+            <div class="fd">스트라이프를 통째로 미러링. 디스크 1개 고장 시 <b>해당 스트라이프 그룹 전체</b>가 죽고,
+              반대편 그룹에서 추가 1개만 더 고장나도 <span class="bad">전체 손실</span>.</div>
+          </div>
+          <div class="arrow">↔</div>
+          <div class="fbox">
+            <div class="ft">RAID 10 <span class="good">우수</span></div>
+            <div class="fd">미러 쌍을 먼저 만든 뒤 스트라이핑. 1개 고장은 <b>해당 미러 쌍에만</b> 영향,
+              다른 쌍의 디스크가 고장나도 <span class="good">정상 동작</span>.</div>
+          </div>
+        </div>
+        <div style="font-size:11.5px;color:var(--sub);line-height:1.7;margin-top:4px">
+          복구 범위가 미러 쌍 단위로 국한되어 RAID 10이 장애 내성·재구축 측면에서 <b style="color:var(--txt)">더 견고</b>하다.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HDD vs SSD -->
+  <div class="card">
+    <h2><span class="dot" style="background:var(--orange)"></span>HDD vs SSD(NVM) 구조·특성 비교</h2>
+    <div class="hsgrid">
+      <div class="hs">
+        <div class="ht"><span class="ic" style="background:rgba(79,156,255,.18)">
+          <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="#4f9cff" stroke-width="1.4"/><circle cx="8" cy="8" r="1.6" fill="#4f9cff"/><line x1="8" y1="8" x2="13" y2="4" stroke="#4f9cff" stroke-width="1.4"/></svg>
+        </span>HDD (자기 디스크)</div>
+        <ul>
+          <li><b>구조</b>플래터·트랙·섹터·실린더 / 헤드·디스크 암의 기계적 이동</li>
+          <li><b>접근시간</b>탐색시간 + 회전지연 + 전송시간 (기계적)</li>
+          <li><b>특성</b>덮어쓰기 가능 · 순차 접근에 유리 · 7,200 RPM 등 RPM 의존</li>
+          <li><b>비용</b>용량당 단가 저렴, 대용량 아카이브에 적합</li>
+        </ul>
+      </div>
+      <div class="hs">
+        <div class="ht"><span class="ic" style="background:rgba(63,185,80,.18)">
+          <svg width="16" height="16" viewBox="0 0 16 16"><rect x="2.5" y="3" width="11" height="10" rx="1.5" fill="none" stroke="#3fb950" stroke-width="1.4"/><line x1="5" y1="6" x2="11" y2="6" stroke="#3fb950" stroke-width="1.2"/><line x1="5" y1="8.5" x2="11" y2="8.5" stroke="#3fb950" stroke-width="1.2"/><line x1="5" y1="11" x2="9" y2="11" stroke="#3fb950" stroke-width="1.2"/></svg>
+        </span>SSD (NAND Flash · NVM)</div>
+        <ul>
+          <li><b>구조</b>페이지 단위 읽기/쓰기 · <b style="color:var(--orange)">블록 단위 삭제</b> · 덮어쓰기 불가</li>
+          <li><b>접근시간</b>기계적 이동 없음 → 마이크로초 단위, 탐색지연 거의 0</li>
+          <li><b>내부관리</b>FTL · 가비지 컬렉션 · 웨어 레벨링 · TRIM</li>
+          <li><b>특성</b>랜덤 접근 우수 · 셀 수명(쓰기 횟수) 제한 → 마모 균등화 필요</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="calc">
+      <h3><span class="dot" style="background:var(--accent)"></span>7,200 RPM HDD 평균 접근 시간 계산 — 약 <b style="color:var(--accent)">12.18 ms</b></h3>
+      <div class="calcrow">
+        <div class="term"><div class="tk">평균 탐색시간 (Seek)</div><div class="tv">8.00 <small style="font-size:11px;color:var(--sub)">ms</small></div></div>
+        <div class="op">+</div>
+        <div class="term"><div class="tk">평균 회전지연 (½ 회전)</div><div class="tv">4.17 <small style="font-size:11px;color:var(--sub)">ms</small></div></div>
+        <div class="op">+</div>
+        <div class="term"><div class="tk">전송시간 (Transfer)</div><div class="tv">0.01 <small style="font-size:11px;color:var(--sub)">ms</small></div></div>
+        <div class="op">=</div>
+        <div class="term total"><div class="tk">평균 접근시간</div><div class="tv">12.18 <small style="font-size:11px">ms</small></div></div>
+      </div>
+      <div class="ex">
+        회전지연: <code>7,200 RPM = 120 회/초</code> → 1회전 <code>1000 / 120 = 8.333 ms</code>,
+        평균 회전지연은 그 절반인 <code>8.333 / 2 = 4.167 ms</code>.
+        전체의 약 <b style="color:var(--txt)">66%를 탐색시간이 차지</b>하여 HDD 성능은 헤드 이동량(=디스크 스케줄링)에 크게 좌우된다.
+      </div>
+    </div>
+  </div>
+
+  <footer>KUS-TUDY · Big O(S) 스터디 활동 증빙 자료 <span class="pill">10주차 · 대용량 저장장치 구조와 스토리지 관리</span></footer>
+</div>
+
+<script>
+// disk icon generator
+const NS="http://www.w3.org/2000/svg";
+function diskSVG(type){
+  // type: D data, M mirror, P parity, Q parity2, E empty
+  const col={D:"#4f9cff",M:"#bc8cff",P:"#e3b341",Q:"#ff8a4f"}[type]||"#4f9cff";
+  const lab={D:"D",M:"M",P:"P",Q:"Q"}[type]||"D";
+  return `<svg width="34" height="40" viewBox="0 0 34 40">
+    <ellipse cx="17" cy="7" rx="13" ry="5" fill="none" stroke="${col}" stroke-width="1.6"/>
+    <path d="M4 7 V33 A13 5 0 0 0 30 33 V7" fill="rgba(255,255,255,0.02)" stroke="${col}" stroke-width="1.6"/>
+    <ellipse cx="17" cy="20" rx="13" ry="5" fill="none" stroke="${col}" stroke-width="1" opacity=".5"/>
+    <text x="17" y="36" fill="${col}" font-size="11" font-weight="800" text-anchor="middle" font-family="Consolas,monospace">${lab}</text>
+  </svg>`;
+}
+
+const RAIDS=[
+  {lv:"RAID 0", tag:"#4f9cff", tagt:"스트라이핑", disks:["D","D"], min:"2",
+   cap:"100%", tol:0, read:5, write:5,
+   blurb:"데이터를 분산 저장(스트라이핑). 용량·성능 100%지만 패리티/미러 없어 1개만 고장나도 전체 손실."},
+  {lv:"RAID 1", tag:"#bc8cff", tagt:"미러링", disks:["D","M"], min:"2",
+   cap:"50%", tol:1, read:4, write:3,
+   blurb:"동일 데이터를 미러링(이중화). 읽기 분산 가능, 용량 효율 50%. 안정성 높음."},
+  {lv:"RAID 4", tag:"#e3b341", tagt:"전용 패리티", disks:["D","D","D","P"], min:"3",
+   cap:"(N-1)/N", tol:1, read:4, write:2,
+   blurb:"블록 단위 스트라이핑 + 전용 패리티 디스크 1개. 모든 쓰기가 패리티 디스크에 집중 → 병목."},
+  {lv:"RAID 5", tag:"#3fb950", tagt:"분산 패리티", disks:["D","D","P","D"], min:"3",
+   cap:"(N-1)/N", tol:1, read:5, write:3,
+   blurb:"패리티를 모든 디스크에 분산 저장. RAID 4 병목 해결, 용량·성능·안정성 균형 우수."},
+  {lv:"RAID 6", tag:"#ff8a4f", tagt:"이중 패리티", disks:["D","D","P","Q"], min:"4",
+   cap:"(N-2)/N", tol:2, read:5, write:2,
+   blurb:"서로 다른 두 패리티(P·Q) 분산. 동시 2개 디스크 장애까지 허용, 쓰기 오버헤드 큼."},
+  {lv:"RAID 10", tag:"#39d0d8", tagt:"미러+스트라이프", disks:["D","M","D","M"], min:"4",
+   cap:"50%", tol:"1+", read:5, write:4,
+   blurb:"미러 쌍(1)을 만든 뒤 스트라이핑(0). 높은 성능과 안정성, 복구가 미러 쌍 단위로 국한."},
+];
+
+// build layout cards
+const rg=document.getElementById("raidgrid");
+RAIDS.forEach(r=>{
+  const div=document.createElement("div"); div.className="raid";
+  div.innerHTML=`
+    <div class="name">${r.lv}<span class="tag" style="background:${r.tag}">${r.tagt}</span></div>
+    <div class="blurb">${r.blurb}</div>
+    <div class="disks">${r.disks.map(d=>`<div class="disk">${diskSVG(d)}</div>`).join("")}</div>
+    <div class="minigrid">
+      <div class="mini"><div class="k">용량 효율</div><div class="v" style="color:${r.tag}">${r.cap}</div></div>
+      <div class="mini"><div class="k">허용 장애</div><div class="v" style="color:${(r.tol===0)?'#f85149':'#3fb950'}">${r.tol===0?'0개':r.tol+'개'}</div></div>
+    </div>`;
+  rg.appendChild(div);
+});
+
+// rating bars
+function rateBars(n){
+  let s='<span class="rate">';
+  for(let i=1;i<=5;i++){
+    let cls = i<=n ? (n>=4?'f':(n>=3?'fy':'fr')) : '';
+    s+=`<i class="${cls}"></i>`;
+  }
+  return s+'</span>';
+}
+
+const tb=document.getElementById("tbl");
+RAIDS.forEach(r=>{
+  const tr=document.createElement("tr");
+  const tolHtml = r.tol===0
+    ? `<span class="tol-0">0개 (없음)</span>`
+    : `<span class="tol-p">${r.tol}개</span>`;
+  tr.innerHTML=`
+    <td class="lv"><span class="chip" style="background:${r.tag}"></span>${r.lv}</td>
+    <td style="color:var(--sub)">${r.tagt}</td>
+    <td>${r.min}</td>
+    <td style="font-weight:700;color:${r.tag}">${r.cap}</td>
+    <td>${tolHtml}</td>
+    <td>${rateBars(r.read)}</td>
+    <td>${rateBars(r.write)}</td>`;
+  tb.appendChild(tr);
+});
+</script>
+</body>
+</html>

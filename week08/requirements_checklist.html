@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>요구사항 체크리스트 대시보드 · Big O(S)</title>
+<style>
+  :root{
+    --bg:#0d1424; --panel:#15203a; --panel2:#1b2842; --line:#2b3a5a;
+    --txt:#e9eef8; --sub:#9aaccb; --accent:#ffb454;
+    --unit:#6aa0ff; --integ:#8b7bff; --sys:#3fd0c0; --accept:#ffce5c;
+    --race:#ff7a7a; --dead:#ff9f43; --starv:#c779ff;
+    --ok:#36d399;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    background:radial-gradient(1200px 600px at 70% -10%,#1a2746,#0d1424 60%);
+    color:var(--txt); min-height:100vh; padding-bottom:34px;
+  }
+  header.top{
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    padding:14px 28px; background:linear-gradient(90deg,#13213d,#1c2c4d);
+    border-bottom:2px solid var(--line); box-shadow:0 4px 22px rgba(0,0,0,.45);
+  }
+  .logo{
+    font-weight:800; font-size:19px; letter-spacing:.5px;
+    background:linear-gradient(90deg,#7fb0ff,#62f0c0);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .crumb{color:var(--sub); font-size:14px;} .crumb b{color:var(--txt);}
+  .spacer{flex:1;}
+  .pill{font-size:12px; padding:5px 12px; border-radius:999px; background:#21304d; border:1px solid var(--line); color:var(--sub);}
+  .wrap{max-width:1240px; margin:22px auto 0; padding:0 24px;}
+
+  .stats{display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:8px;}
+  @media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr);}}
+  .stat{background:var(--panel); border:1px solid var(--line); border-radius:13px; padding:14px 16px;}
+  .stat .n{font-size:26px; font-weight:800;}
+  .stat .l{font-size:12px; color:var(--sub); margin-top:2px;}
+  .progwrap{margin:14px 0 18px; background:var(--panel); border:1px solid var(--line); border-radius:13px; padding:14px 18px;}
+  .progrow{display:flex; align-items:center; gap:14px;}
+  .progrow .ttl{font-size:13px; color:var(--sub); min-width:140px;}
+  .progbar{flex:1; height:14px; border-radius:8px; background:#0f1830; overflow:hidden; border:1px solid var(--line);}
+  .progbar i{display:block; height:100%; width:0; background:linear-gradient(90deg,#36d399,#3fd0c0); transition:width .8s ease;}
+  .progpct{font-size:14px; font-weight:800; color:var(--ok); min-width:48px; text-align:right;}
+
+  .toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:14px;}
+  .toolbar .lbl{font-size:12px; color:var(--sub); margin-right:4px;}
+  .chip{font-family:inherit; font-size:12px; cursor:pointer; padding:6px 12px; border-radius:999px;
+    background:#16223d; border:1px solid var(--line); color:var(--sub); transition:.15s;}
+  .chip:hover{color:var(--txt); border-color:#3a4d75;}
+  .chip.on{background:#23386a; color:#fff; border-color:#4a6bb0;}
+
+  .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  @media(max-width:1080px){.grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:720px){.grid{grid-template-columns:1fr;}}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:15px; padding:16px 16px 14px;
+    box-shadow:0 8px 26px rgba(0,0,0,.32); display:flex; flex-direction:column;}
+  .card.dim{opacity:.28; filter:saturate(.4);}
+  .card h3{font-size:15px; margin-bottom:3px; display:flex; align-items:center; gap:8px;}
+  .dom{font-size:11px; padding:2px 8px; border-radius:6px; font-weight:700;}
+  .dom.algo{background:#15314f; color:#7fc0ff;}
+  .dom.os{background:#2c2350; color:#c4b0ff;}
+  .card .sub{font-size:11.5px; color:var(--sub); margin-bottom:10px; line-height:1.5;}
+  .req{display:flex; align-items:flex-start; gap:9px; padding:8px 0; border-top:1px solid #1f2c47;}
+  .req:first-of-type{border-top:none;}
+  .box{width:18px; height:18px; border-radius:5px; border:2px solid #3f547d; flex-shrink:0;
+    margin-top:1px; cursor:pointer; position:relative; transition:.15s;}
+  .box.ck{background:var(--ok); border-color:var(--ok);}
+  .box.ck::after{content:""; position:absolute; left:5px; top:1px; width:5px; height:10px;
+    border:solid #06281a; border-width:0 2.5px 2.5px 0; transform:rotate(43deg);}
+  .req .txt{flex:1; font-size:12.5px; line-height:1.45;}
+  .req .txt b{color:var(--txt);}
+  .req .txt small{display:block; color:var(--sub); margin-top:2px; font-size:11px;}
+  .tphase{font-size:10px; padding:2px 7px; border-radius:6px; font-weight:700; white-space:nowrap; align-self:flex-start; margin-top:1px;}
+  .t-unit{background:rgba(106,160,255,.16); color:var(--unit); border:1px solid rgba(106,160,255,.4);}
+  .t-integ{background:rgba(139,123,255,.16); color:var(--integ); border:1px solid rgba(139,123,255,.4);}
+  .t-sys{background:rgba(63,208,192,.16); color:var(--sys); border:1px solid rgba(63,208,192,.4);}
+  .t-accept{background:rgba(255,206,92,.16); color:var(--accept); border:1px solid rgba(255,206,92,.4);}
+
+  .badges{display:flex; gap:6px; flex-wrap:wrap; margin-top:auto; padding-top:11px;}
+  .warn{font-size:10.5px; padding:3px 9px; border-radius:999px; font-weight:700; display:inline-flex; gap:5px; align-items:center;}
+  .warn::before{content:"⚠"; font-size:11px;}
+  .w-race{background:rgba(255,122,122,.13); color:var(--race); border:1px solid rgba(255,122,122,.45);}
+  .w-dead{background:rgba(255,159,67,.13); color:var(--dead); border:1px solid rgba(255,159,67,.45);}
+  .w-starv{background:rgba(199,121,255,.13); color:var(--starv); border:1px solid rgba(199,121,255,.45);}
+
+  .legendbox{margin-top:18px; background:var(--panel); border:1px solid var(--line); border-radius:13px; padding:13px 16px;
+    display:flex; gap:22px; flex-wrap:wrap; font-size:12px; color:var(--sub);}
+  .legendbox b{color:var(--txt);}
+  .legendbox .grp{display:flex; gap:9px; align-items:center; flex-wrap:wrap;}
+  footer{text-align:center; color:var(--sub); font-size:12px; margin-top:24px;}
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="logo">Big O(S)</span>
+  <span class="crumb">· 08주차 · <b>요구사항 체크리스트 대시보드</b> · 2026.05.17</span>
+  <span class="spacer"></span>
+  <span class="pill">알고리즘 · OS 동기화</span>
+  <span class="pill">증빙 #2</span>
+</header>
+
+<div class="wrap">
+  <div class="stats">
+    <div class="stat"><div class="n" style="color:#7fc0ff">6</div><div class="l">요구사항 영역</div></div>
+    <div class="stat"><div class="n" id="reqTotal" style="color:#fff">0</div><div class="l">명세 항목(총)</div></div>
+    <div class="stat"><div class="n" id="reqDone" style="color:var(--ok)">0</div><div class="l">명세 완료</div></div>
+    <div class="stat"><div class="n" style="color:#ffce5c">4</div><div class="l">테스트 단계</div></div>
+    <div class="stat"><div class="n" style="color:#ff7a7a">3</div><div class="l">미명세 결함 유형</div></div>
+  </div>
+
+  <div class="progwrap">
+    <div class="progrow">
+      <span class="ttl">요구사항 명세 진척도</span>
+      <span class="progbar"><i id="prog"></i></span>
+      <span class="progpct" id="progPct">0%</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <span class="lbl">영역 필터</span>
+    <button class="chip on" data-f="all">전체</button>
+    <button class="chip" data-f="algo">알고리즘</button>
+    <button class="chip" data-f="os">OS 동기화</button>
+    <span class="spacer"></span>
+    <span class="lbl">결함</span>
+    <button class="chip" data-w="race" style="border-color:rgba(255,122,122,.45);color:#ff7a7a">Race</button>
+    <button class="chip" data-w="dead" style="border-color:rgba(255,159,67,.45);color:#ff9f43">Deadlock</button>
+    <button class="chip" data-w="starv" style="border-color:rgba(199,121,255,.45);color:#c779ff">Starvation</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="legendbox">
+    <span class="grp"><b>대응 테스트 단계:</b>
+      <span class="tphase t-unit">단위</span>
+      <span class="tphase t-integ">통합</span>
+      <span class="tphase t-sys">시스템</span>
+      <span class="tphase t-accept">인수</span>
+    </span>
+    <span class="grp"><b>미명세 시 결함:</b>
+      <span class="warn w-race">Race Condition</span>
+      <span class="warn w-dead">Deadlock</span>
+      <span class="warn w-starv">Starvation</span>
+    </span>
+  </div>
+</div>
+
+<footer>KUS-TUDY · Big O(S) 스터디 활동 증빙 자료</footer>
+
+<script>
+  // 데이터: 보고서의 사례 그대로
+  var CARDS = [
+    {
+      dom:"algo", title:"정렬 알고리즘 선택", sub:"입력 크기·분포·안정성이 없으면 알고리즘 선택 자체가 불가능",
+      reqs:[
+        {t:"입력 크기(N)·데이터 분포 명세", s:"삽입 정렬 O(n)~퀵 최악 O(n²) 판단 근거", p:"sys", ck:true},
+        {t:"안정성(stable) 필요 여부 명세", s:"필요 시 병합 정렬, 불필요 시 퀵 정렬 선택", p:"accept", ck:true},
+        {t:"최악 시간복잡도 허용 범위 명세", s:"성능 테스트·경계값 테스트 기준", p:"sys", ck:false}
+      ], warns:[]
+    },
+    {
+      dom:"algo", title:"DP(동적 프로그래밍) 설계", sub:"점화식 자체가 요구사항 → 단위 테스트의 기준",
+      reqs:[
+        {t:"상태(state) 정의", s:"부분 문제를 식별하는 차원 명세", p:"unit", ck:true},
+        {t:"전이(transition) 함수", s:"최적 부분 구조 기반 점화식", p:"unit", ck:true},
+        {t:"기저 조건(base case)", s:"중복 부분 문제 종료 조건", p:"unit", ck:true}
+      ], warns:[]
+    },
+    {
+      dom:"algo", title:"완전탐색·탐색", sub:"N의 크기·가지치기·DFS/BFS 선택 기준 명세",
+      reqs:[
+        {t:"탐색 공간 범위(N의 크기)", s:"O(N!) 완전탐색 허용 여부 판단", p:"sys", ck:true},
+        {t:"가지치기(pruning) 필요 여부", s:"N 불명확 시 판단 불가", p:"integ", ck:false},
+        {t:"최단 경로 필요 여부(DFS vs BFS)", s:"탐색 전략 선택 기준", p:"accept", ck:true}
+      ], warns:[]
+    },
+    {
+      dom:"os", title:"동기화 도구 선택 (Mutex/Semaphore/Monitor)", sub:"선택 기준 미명세 시 통합 테스트에서 Deadlock·Starvation 발생",
+      reqs:[
+        {t:"대기 시간 요구사항 (Mutex/Spinlock)", s:"Spinlock 사용 시 CPU 낭비 방지", p:"integ", ck:true},
+        {t:"Semaphore 초기값·wait/signal 호출 순서", s:"Counting Semaphore 자원 N개 관리", p:"integ", ck:true},
+        {t:"Monitor 방식 명세 (Signal&Wait vs Signal&Continue)", s:"조건 변수 x_wait/x_signal 동기화", p:"integ", ck:false}
+      ], warns:["dead","starv"]
+    },
+    {
+      dom:"os", title:"임계구역 & Liveness 요구사항", sub:"공유 자원·임계구역 3조건·우선순위 정책 미명세 시 설계 불완전",
+      reqs:[
+        {t:"공유 자원 목록·동시 접근 프로세스 수", s:"count=5 동시 ++/-- → 4 또는 6 비결정", p:"sys", ck:true},
+        {t:"임계구역 3조건 (상호배제·진행·한계대기)", s:"선점형/비선점형 커널 명세 포함", p:"sys", ck:true},
+        {t:"Deadlock-free 보장 여부", s:"두 프로세스 자원 무한 대기 예방 전략", p:"accept", ck:true},
+        {t:"Priority Inheritance 적용 여부", s:"1997 화성 탐사선 Pathfinder 사례", p:"accept", ck:false}
+      ], warns:["race","dead"]
+    },
+    {
+      dom:"os", title:"동기화 고전 3문제", sub:"버퍼 크기·우선순위·deadlock/starvation-free 명세 필요",
+      reqs:[
+        {t:"Bounded-Buffer: 버퍼 크기 N·호출 순서", s:"mutex는 counting semaphore wait 이후 호출", p:"integ", ck:true},
+        {t:"Readers-Writers: readers/writers 우선 정책", s:"First vs Second Problem 결정", p:"integ", ck:false},
+        {t:"Dining-Philosophers: deadlock·starvation-free 동시 보장", s:"단순 semaphore는 deadlock 유발 가능", p:"accept", ck:false}
+      ], warns:["dead","starv"]
+    }
+  ];
+
+  var PNAME = {unit:"단위", integ:"통합", sys:"시스템", accept:"인수"};
+  var WNAME = {race:"Race", dead:"Deadlock", starv:"Starvation"};
+  var grid = document.getElementById('grid');
+  var cardEls = [];
+
+  CARDS.forEach(function(c, ci){
+    var el = document.createElement('div');
+    el.className = 'card';
+    el.setAttribute('data-dom', c.dom);
+    el.setAttribute('data-warns', c.warns.join(' '));
+    var html = '<h3><span class="dom '+c.dom+'">'+(c.dom==='algo'?'알고리즘':'OS')+'</span>'+c.title+'</h3>';
+    html += '<div class="sub">'+c.sub+'</div>';
+    c.reqs.forEach(function(r, ri){
+      html += '<div class="req">'+
+        '<div class="box'+(r.ck?' ck':'')+'" data-c="'+ci+'" data-r="'+ri+'"></div>'+
+        '<div class="txt"><b>'+r.t+'</b><small>'+r.s+'</small></div>'+
+        '<span class="tphase t-'+r.p+'">'+PNAME[r.p]+'</span>'+
+        '</div>';
+    });
+    html += '<div class="badges">';
+    c.warns.forEach(function(w){ html += '<span class="warn w-'+w+'">'+WNAME[w]+'</span>'; });
+    html += '</div>';
+    el.innerHTML = html;
+    grid.appendChild(el);
+    cardEls.push(el);
+  });
+
+  function recompute(){
+    var boxes = document.querySelectorAll('.box');
+    var total = boxes.length, done = 0;
+    boxes.forEach(function(b){ if(b.classList.contains('ck')) done++; });
+    var pct = Math.round(done/total*100);
+    document.getElementById('reqTotal').textContent = total;
+    document.getElementById('reqDone').textContent = done;
+    document.getElementById('prog').style.width = pct+'%';
+    document.getElementById('progPct').textContent = pct+'%';
+  }
+
+  grid.addEventListener('click', function(e){
+    var b = e.target.closest('.box');
+    if(!b) return;
+    b.classList.toggle('ck');
+    recompute();
+  });
+
+  // 필터: 영역
+  document.querySelectorAll('.chip[data-f]').forEach(function(ch){
+    ch.addEventListener('click', function(){
+      document.querySelectorAll('.chip[data-f]').forEach(function(x){x.classList.remove('on');});
+      ch.classList.add('on');
+      var f = ch.getAttribute('data-f');
+      cardEls.forEach(function(el){
+        el.classList.toggle('dim', f!=='all' && el.getAttribute('data-dom')!==f);
+      });
+    });
+  });
+  // 필터: 결함 강조(토글)
+  document.querySelectorAll('.chip[data-w]').forEach(function(ch){
+    ch.addEventListener('click', function(){
+      ch.classList.toggle('on');
+      var active = Array.prototype.map.call(document.querySelectorAll('.chip[data-w].on'),
+        function(x){return x.getAttribute('data-w');});
+      cardEls.forEach(function(el){
+        if(active.length===0){ el.classList.remove('dim'); return; }
+        var ws = el.getAttribute('data-warns').split(' ');
+        var hit = active.some(function(a){ return ws.indexOf(a)>=0; });
+        el.classList.toggle('dim', !hit);
+      });
+      // 영역 필터가 전체가 아니면 우선권 유지 위해 영역칩 초기화
+      if(active.length>0){
+        document.querySelectorAll('.chip[data-f]').forEach(function(x){x.classList.remove('on');});
+        document.querySelector('.chip[data-f="all"]').classList.add('on');
+      }
+    });
+  });
+
+  recompute(); // 기본 완성 상태 (체크 일부 ON, 진척도 표시)
+  // 진척 바 애니메이션 트리거
+  requestAnimationFrame(recompute);
+</script>
+</body>
+</html>

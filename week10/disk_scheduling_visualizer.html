@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>디스크 스케줄링 시각화 · Big O(S) 10주차</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#2a3240;
+    --txt:#e6edf3; --sub:#9aa7b6; --accent:#4f9cff; --accent2:#ff8a4f;
+    --green:#3fb950; --red:#f85149; --yellow:#e3b341; --purple:#bc8cff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--txt);
+    font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px 22px 40px;}
+  header.top{display:flex;align-items:center;gap:14px;padding:14px 20px;border-radius:14px;
+    background:linear-gradient(100deg,#15233b 0%,#1a2030 60%,#221a2e 100%);
+    border:1px solid var(--line);margin-bottom:18px;box-shadow:0 4px 18px rgba(0,0,0,.35);}
+  .logo{width:42px;height:42px;border-radius:11px;flex:0 0 auto;
+    background:linear-gradient(135deg,var(--accent),var(--purple));
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;letter-spacing:.5px;}
+  .htext{display:flex;flex-direction:column;line-height:1.35}
+  .htext .crumbs{font-size:12.5px;color:var(--sub);font-weight:600}
+  .htext .crumbs b{color:var(--accent)}
+  .htext .title{font-size:18px;font-weight:800;letter-spacing:-.3px}
+  .htext .date{margin-left:auto}
+  .spacer{flex:1}
+  .hdate{font-size:12.5px;color:var(--sub);background:#0e1420;border:1px solid var(--line);
+    padding:6px 12px;border-radius:20px;font-weight:600}
+  .grid{display:grid;grid-template-columns:1fr 330px;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .card h2{font-size:14px;letter-spacing:.3px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .card h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  .card .desc{font-size:12px;color:var(--sub);margin-bottom:12px;line-height:1.6}
+  .algobar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .algobtn{background:#0e1420;border:1px solid var(--line);color:var(--sub);
+    padding:8px 14px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;
+    font-family:inherit;transition:.15s;display:flex;align-items:center;gap:7px}
+  .algobtn .sw{width:11px;height:11px;border-radius:3px;background:#444}
+  .algobtn:hover{border-color:var(--accent);color:var(--txt)}
+  .algobtn.on{color:#fff;border-color:transparent;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset}
+  .algobtn.on.fcfs{background:rgba(79,156,255,.16);border-color:var(--accent)}
+  .algobtn.on.scan{background:rgba(255,138,79,.16);border-color:var(--accent2)}
+  .algobtn.on.cscan{background:rgba(188,140,255,.16);border-color:var(--purple)}
+  .algobtn.on.look{background:rgba(63,185,80,.16);border-color:var(--green)}
+  .algobtn.on.clook{background:rgba(227,179,65,.16);border-color:var(--yellow)}
+  svg{display:block;width:100%}
+  .legendrow{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--sub)}
+  .legendrow span{display:flex;align-items:center;gap:6px}
+  .legendrow i{width:18px;height:3px;border-radius:2px;display:inline-block}
+  /* side */
+  .metric{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:13px 14px;margin-bottom:10px}
+  .metric .lab{font-size:11.5px;color:var(--sub);font-weight:600;display:flex;align-items:center;gap:7px}
+  .metric .lab .sw{width:10px;height:10px;border-radius:3px}
+  .metric .val{font-size:27px;font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums}
+  .metric .val small{font-size:13px;font-weight:600;color:var(--sub);margin-left:3px}
+  .metric .bar{height:7px;border-radius:4px;background:#0c111a;margin-top:9px;overflow:hidden}
+  .metric .bar>i{display:block;height:100%;border-radius:4px}
+  .seqbox{font-size:11.5px;color:var(--sub);background:#0c111a;border:1px solid var(--line);
+    border-radius:9px;padding:10px 12px;line-height:1.8;margin-top:4px;font-variant-numeric:tabular-nums}
+  .seqbox b{color:var(--txt);font-weight:700}
+  .seqorder{font-family:"Consolas",monospace;color:var(--accent);word-break:break-all}
+  table{width:100%;border-collapse:collapse;margin-top:6px;font-size:12px}
+  th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line)}
+  th{color:var(--sub);font-weight:700;font-size:11px}
+  td.algo{text-align:left;font-weight:700}
+  td .chip{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;vertical-align:middle}
+  .best{color:var(--green);font-weight:800}
+  .worst{color:var(--red);font-weight:800}
+  .note{font-size:11.5px;color:var(--sub);line-height:1.7;margin-top:12px;
+    background:#0c111a;border-left:3px solid var(--accent);padding:10px 12px;border-radius:0 8px 8px 0}
+  .note b{color:var(--txt)}
+  footer{margin-top:22px;text-align:center;font-size:12px;color:var(--sub);
+    padding-top:14px;border-top:1px solid var(--line)}
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;
+    background:#0e1420;border:1px solid var(--line);color:var(--sub);margin-left:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">O(S)</div>
+    <div class="htext">
+      <div class="crumbs"><b>Big O(S)</b> · 10주차 · 디스크 헤드 이동 시각화</div>
+      <div class="title">디스크 스케줄링 알고리즘 — 헤드 이동 경로 분석</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="hdate">2026.05.30</div>
+  </header>
+
+  <div class="grid">
+    <!-- main chart -->
+    <div class="card">
+      <h2><span class="dot"></span>헤드 이동 경로 (가로=실린더 0~199, 세로=서비스 순서)</h2>
+      <div class="desc">초기 헤드 위치 <b style="color:var(--txt)">53</b> · 요청 큐 8개에 대한 각 알고리즘의 탐색 경로.
+        로드 시 <b style="color:var(--accent)">FCFS</b>와 <b style="color:var(--accent2)">SCAN</b>이 기본 표시됩니다. 버튼으로 알고리즘을 토글하세요.</div>
+      <div class="algobar" id="algobar">
+        <button class="algobtn on fcfs" data-k="FCFS"><span class="sw" style="background:#4f9cff"></span>FCFS</button>
+        <button class="algobtn on scan" data-k="SCAN"><span class="sw" style="background:#ff8a4f"></span>SCAN</button>
+        <button class="algobtn cscan" data-k="CSCAN"><span class="sw" style="background:#bc8cff"></span>C-SCAN</button>
+        <button class="algobtn look" data-k="LOOK"><span class="sw" style="background:#3fb950"></span>LOOK</button>
+        <button class="algobtn clook" data-k="CLOOK"><span class="sw" style="background:#e3b341"></span>C-LOOK</button>
+      </div>
+      <svg id="chart" viewBox="0 0 720 470" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="legendrow" id="legend"></div>
+    </div>
+
+    <!-- side metrics -->
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <h2><span class="dot" style="background:var(--accent2)"></span>총 이동 거리 비교</h2>
+        <div class="metric">
+          <div class="lab"><span class="sw" style="background:#4f9cff"></span>FCFS (선입선처리)</div>
+          <div class="val" style="color:#4f9cff">640<small>실린더</small></div>
+          <div class="bar"><i style="width:100%;background:#4f9cff"></i></div>
+        </div>
+        <div class="metric">
+          <div class="lab"><span class="sw" style="background:#ff8a4f"></span>SCAN (엘리베이터)</div>
+          <div class="val" style="color:#ff8a4f">236<small>실린더</small></div>
+          <div class="bar"><i style="width:36.9%;background:#ff8a4f"></i></div>
+        </div>
+        <div class="note" style="margin-top:6px">SCAN은 FCFS 대비 이동량을 <b>약 63% 절감</b>(640 → 236)하여 탐색 시간을 크게 줄입니다.</div>
+      </div>
+
+      <div class="card">
+        <h2><span class="dot" style="background:var(--green)"></span>입력 데이터</h2>
+        <div class="seqbox">
+          초기 헤드: <b>53</b> · 실린더 범위 <b>0 ~ 199</b><br>
+          요청 큐(도착 순):<br>
+          <span class="seqorder">98, 183, 37, 122, 14, 124, 65, 67</span>
+        </div>
+        <table>
+          <thead><tr><th>알고리즘</th><th>방향</th><th>총 이동</th></tr></thead>
+          <tbody id="tbl"></tbody>
+        </table>
+        <div class="note">SCAN/C-SCAN은 디스크 끝(0·199)까지 이동하고, <b>LOOK/C-LOOK</b>은 마지막 요청에서 방향을 전환해 불필요한 이동을 줄입니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>KUS-TUDY · Big O(S) 스터디 활동 증빙 자료 <span class="pill">10주차 · 대용량 저장장치 구조와 스토리지 관리</span></footer>
+</div>
+
+<script>
+const HEAD=53, MIN=0, MAX=199;
+const REQ=[98,183,37,122,14,124,65,67];
+// precomputed service paths (head excluded as a "request row" but used as start)
+const ALGO={
+  FCFS :{name:"FCFS", dir:"도착순",  color:"#4f9cff", path:[53,98,183,37,122,14,124,65,67], total:640},
+  SCAN :{name:"SCAN", dir:"하향→상향",color:"#ff8a4f", path:[53,37,14,0,65,67,98,122,124,183], total:236},
+  CSCAN:{name:"C-SCAN",dir:"상향→0순환",color:"#bc8cff",path:[53,65,67,98,122,124,183,199,0,14,37], total:382},
+  LOOK :{name:"LOOK", dir:"하향→상향",color:"#3fb950", path:[53,37,14,65,67,98,122,124,183], total:208},
+  CLOOK:{name:"C-LOOK",dir:"상향→순환",color:"#e3b341",path:[53,65,67,98,122,124,183,14,37], total:322},
+};
+const ORDER=["FCFS","SCAN","CSCAN","LOOK","CLOOK"];
+let active=new Set(["FCFS","SCAN"]);
+
+const svg=document.getElementById("chart");
+const NS="http://www.w3.org/2000/svg";
+const W=720,H=470, padL=46,padR=22,padT=40,padB=26;
+const plotW=W-padL-padR;
+
+function x(c){return padL + (c-MIN)/(MAX-MIN)*plotW;}
+
+function el(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+
+function draw(){
+  svg.innerHTML="";
+  // max rows among active to scale vertical
+  let maxRows=1;
+  active.forEach(k=>maxRows=Math.max(maxRows,ALGO[k].path.length));
+  const plotH=H-padT-padB;
+  const rowGap=plotH/(maxRows); // step per service
+  function y(i){return padT + i*rowGap + rowGap*0.0 + 6;}
+
+  // background grid: cylinder axis labels
+  for(let c=0;c<=199;c+=25){
+    const gx=x(c);
+    svg.appendChild(el("line",{x1:gx,y1:padT-6,x2:gx,y2:H-padB+2,stroke:"#222b38","stroke-width":1}));
+    const t=el("text",{x:gx,y:24,fill:"#7c8a9a","font-size":11,"text-anchor":"middle","font-family":"Consolas,monospace"});
+    t.textContent=c; svg.appendChild(t);
+  }
+  svg.appendChild(el("line",{x1:padL,y1:padT-6,x2:W-padR,y2:padT-6,stroke:"#3a4555","stroke-width":1.4}));
+  // top axis title
+  const axt=el("text",{x:padL,y:13,fill:"#9aa7b6","font-size":11,"font-weight":700});
+  axt.textContent="실린더 위치 →"; svg.appendChild(axt);
+
+  // mark initial head position
+  const hx=x(HEAD);
+  svg.appendChild(el("line",{x1:hx,y1:padT-6,x2:hx,y2:H-padB,stroke:"#ffffff","stroke-width":1,"stroke-dasharray":"3 4","opacity":.35}));
+  const ht=el("text",{x:hx,y:38,fill:"#fff","font-size":10.5,"text-anchor":"middle","font-weight":700});
+  ht.textContent="헤드 53"; svg.appendChild(ht);
+
+  // draw each active algorithm
+  ORDER.forEach(k=>{
+    if(!active.has(k))return;
+    const a=ALGO[k], p=a.path;
+    // polyline
+    let pts=p.map((c,i)=>`${x(c).toFixed(1)},${y(i).toFixed(1)}`).join(" ");
+    svg.appendChild(el("polyline",{points:pts,fill:"none",stroke:a.color,"stroke-width":2.4,
+      "stroke-linejoin":"round","stroke-linecap":"round","opacity":.92}));
+    // direction arrow heads along segments + nodes
+    p.forEach((c,i)=>{
+      const cx=x(c),cy=y(i);
+      const isEnd=(c===0||c===199);
+      svg.appendChild(el("circle",{cx:cx,cy:cy,r:isEnd?3.2:4.2,fill:isEnd?a.color:"#0d1117",
+        stroke:a.color,"stroke-width":2}));
+      // value label
+      const lt=el("text",{x:cx,y:cy-7,fill:a.color,"font-size":9.5,"text-anchor":"middle",
+        "font-family":"Consolas,monospace","font-weight":700,"opacity":.95});
+      lt.textContent=c; svg.appendChild(lt);
+    });
+  });
+
+  // y-axis service step labels (left)
+  for(let i=0;i<maxRows;i++){
+    const ly=y(i);
+    const t=el("text",{x:padL-12,y:ly+3,fill:"#5d6b7a","font-size":9,"text-anchor":"end","font-family":"Consolas,monospace"});
+    t.textContent=i===0?"시작":i; svg.appendChild(t);
+  }
+  const yt=el("text",{x:13,y:padT+plotH/2,fill:"#7c8a9a","font-size":11,"text-anchor":"middle",
+    transform:`rotate(-90 13 ${padT+plotH/2})`});
+  yt.textContent="서비스 순서 ↓"; svg.appendChild(yt);
+
+  buildLegend();
+}
+
+function buildLegend(){
+  const lg=document.getElementById("legend"); lg.innerHTML="";
+  ORDER.forEach(k=>{
+    if(!active.has(k))return;
+    const a=ALGO[k];
+    const s=document.createElement("span");
+    s.innerHTML=`<i style="background:${a.color}"></i>${a.name} <b style="color:#e6edf3">${a.total}</b>`;
+    lg.appendChild(s);
+  });
+}
+
+function buildTable(){
+  const tb=document.getElementById("tbl"); tb.innerHTML="";
+  // sort by total ascending to highlight best/worst
+  const totals=ORDER.map(k=>ALGO[k].total);
+  const min=Math.min(...totals),max=Math.max(...totals);
+  ORDER.forEach(k=>{
+    const a=ALGO[k];
+    const tr=document.createElement("tr");
+    const cls=a.total===min?"best":(a.total===max?"worst":"");
+    tr.innerHTML=`<td class="algo"><span class="chip" style="background:${a.color}"></span>${a.name}</td>
+      <td style="color:var(--sub)">${a.dir}</td>
+      <td class="${cls}">${a.total}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+document.getElementById("algobar").addEventListener("click",e=>{
+  const b=e.target.closest(".algobtn"); if(!b)return;
+  const k=b.dataset.k;
+  if(active.has(k)){ if(active.size>1){active.delete(k);b.classList.remove("on");} }
+  else { active.add(k); b.classList.add("on"); }
+  draw();
+});
+
+buildTable();
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>식사하는 철학자 · Big O(S)</title>
+<style>
+  :root{
+    --bg:#0e1320; --panel:#161d2e; --panel2:#1c2540; --line:#283353;
+    --ink:#e8edf7; --muted:#94a3c4; --accent:#6ea8fe; --accent2:#7ee0c2;
+    --think:#6ea8fe; --hungry:#ffce6b; --eat:#3ddc97; --dead:#ff6b81;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Malgun Gothic","Apple SD Gothic Neo","Segoe UI",sans-serif;
+    background:radial-gradient(1200px 700px at 20% -10%,#1b2440,transparent),var(--bg);
+    color:var(--ink); padding:18px; line-height:1.5;
+  }
+  .header{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    background:linear-gradient(90deg,#202a47,#161d2e);
+    border:1px solid var(--line);border-radius:14px;padding:14px 20px;margin-bottom:16px;
+    box-shadow:0 8px 30px rgba(0,0,0,.35);
+  }
+  .logo{font-weight:800;font-size:19px;letter-spacing:.5px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .crumb{color:var(--muted);font-size:14px}
+  .crumb b{color:var(--ink)}
+  .pill{margin-left:auto;font-size:12.5px;color:#0e1320;background:linear-gradient(90deg,var(--accent2),var(--accent));
+    padding:5px 12px;border-radius:999px;font-weight:700}
+  .grid{display:grid;grid-template-columns:1.05fr 1fr;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+  .card h2{font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .tag{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  button{font-family:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--ink);
+    padding:9px 13px;border-radius:10px;font-size:12.5px;font-weight:600;transition:.15s}
+  button:hover{border-color:var(--accent);transform:translateY(-1px)}
+  button.active{background:linear-gradient(90deg,var(--dead),#ff9ec4);color:#0e1320;border-color:transparent}
+  button.activeOk{background:linear-gradient(90deg,var(--eat),var(--accent2));color:#0e1320;border-color:transparent}
+  .stagewrap{display:flex;justify-content:center;margin:6px 0 4px}
+  svg{display:block;max-width:100%}
+  .statusbar{margin-top:8px;border-radius:12px;padding:12px 16px;border:1px solid var(--line);background:#0d1424;text-align:center;font-size:13.5px;font-weight:600}
+  .statusbar.dead{border-color:var(--dead);color:var(--dead);background:linear-gradient(90deg,#2a1d24,#241a22)}
+  .statusbar.ok{border-color:var(--eat);color:var(--eat);background:linear-gradient(90deg,#172a23,#16241f)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px;justify-content:center}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .sw{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .sol{display:grid;gap:10px}
+  .solcard{border:1px solid var(--line);border-radius:12px;padding:11px 14px;background:linear-gradient(180deg,var(--panel2),var(--panel))}
+  .solcard .k{font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px}
+  .solcard .d{font-size:12px;color:var(--muted);margin-top:4px}
+  .num{width:22px;height:22px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:#0e1320;font-weight:800;background:var(--accent)}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:var(--accent2);font-weight:700}
+  td b{color:var(--ink)}
+  .lvl{font-family:"Consolas",monospace;font-size:11px;color:var(--muted)}
+  .pi{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:12px;background:linear-gradient(180deg,#23202e,#191726)}
+  .pi .k{font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;color:var(--hungry)}
+  .pi .d{font-size:12px;color:var(--muted);margin-top:5px}
+  .pi .d b{color:var(--ink)}
+  .barrow{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11px}
+  .barrow .name{width:18px;font-weight:700}
+  .bar{height:13px;border-radius:4px;flex:0 0 auto}
+  .footer{margin-top:18px;text-align:center;color:var(--muted);font-size:12.5px;letter-spacing:.3px}
+  .chopwarn{font-size:11px;color:var(--muted);text-align:center;margin-top:2px}
+</style>
+</head>
+<body>
+  <div class="header">
+    <span class="logo">Big O(S)</span>
+    <span class="crumb">· <b>07주차</b> · <b>식사하는 철학자 &amp; 동기화 도구</b> · 2026.05.10</span>
+    <span class="pill">증빙 · Dining-Philosophers</span>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT: circular table -->
+    <div class="card">
+      <h2>식사하는 철학자 5명 <span class="tag">원형 테이블 · 젓가락 5개 공유</span></h2>
+      <div class="controls">
+        <button id="bdead" class="active">교착상태 (모두 왼쪽 집기)</button>
+        <button id="bok" class="">해결책: 비대칭 방식</button>
+      </div>
+      <div class="stagewrap">
+        <svg id="table" viewBox="0 0 420 420" width="420" height="420" aria-label="원형 식탁"></svg>
+      </div>
+      <div class="statusbar dead" id="status">● DEADLOCK — 5명이 모두 왼쪽 젓가락을 집고 오른쪽을 영원히 대기</div>
+      <div class="chopwarn" id="chopwarn">각 철학자는 양쪽 젓가락을 모두 집어야 식사할 수 있습니다.</div>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--think)"></span> THINKING(사색)</span>
+        <span><span class="sw" style="background:var(--hungry)"></span> HUNGRY(배고픔)</span>
+        <span><span class="sw" style="background:var(--eat)"></span> EATING(식사)</span>
+        <span><span class="sw" style="background:var(--dead)"></span> 교착(대기)</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: solutions + comparison + priority inversion -->
+    <div class="card">
+      <h2>교착상태 해결책 3가지 <span class="tag">deadlock-free</span></h2>
+      <div class="sol">
+        <div class="solcard">
+          <div class="k"><span class="num">1</span> 동시 착석 4명 제한</div>
+          <div class="d">최대 4명만 테이블에 앉히면, 적어도 한 명은 양쪽 젓가락을 확보할 수 있어 교착이 발생하지 않는다.</div>
+        </div>
+        <div class="solcard">
+          <div class="k"><span class="num" style="background:var(--accent2)">2</span> 양쪽 동시 집기 (Monitor)</div>
+          <div class="d">양쪽 젓가락이 모두 사용 가능할 때만 집는다. THINKING / HUNGRY / EATING 상태와 조건 변수 배열로 구현 — deadlock은 완전 방지하나 starvation은 여전히 가능.</div>
+        </div>
+        <div class="solcard">
+          <div class="k"><span class="num" style="background:var(--hungry)">3</span> 비대칭 방식</div>
+          <div class="d">홀수 번 철학자는 왼쪽 젓가락 먼저, 짝수 번 철학자는 오른쪽 젓가락 먼저 집는다. 순환 대기가 깨져 교착이 사라진다.</div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:16px">동기화 도구 3계층 비교 <span class="tag">저수준 → 고수준</span></h2>
+      <table>
+        <tr><th>도구</th><th>핵심 연산</th><th>특징</th></tr>
+        <tr>
+          <td><b>Mutex</b><div class="lvl">(Spinlock)</div></td>
+          <td>acquire() / release()</td>
+          <td>가장 단순. CAS 기반 원자 실행. Spinlock은 락을 얻을 때까지 루프 → 짧은 임계구역·멀티코어에 유리.</td>
+        </tr>
+        <tr>
+          <td><b>Semaphore</b></td>
+          <td>wait() / signal()</td>
+          <td>정수 S. Bounded-Buffer: <span class="lvl">empty=N, full=0, mutex=1</span>. 자원 개수·실행 순서 제어 가능.</td>
+        </tr>
+        <tr>
+          <td><b>Monitor</b></td>
+          <td>x.wait() / x.signal()</td>
+          <td>상호배제 자동 제공. 조건 변수로 세밀한 순서 제어. signal은 대기자 없으면 효과 없음.</td>
+        </tr>
+      </table>
+
+      <div class="pi">
+        <div class="k">⚠ Priority Inversion — 1997 화성 탐사선 Pathfinder</div>
+        <div class="d">낮은 우선순위 <b>L</b>이 세마포어를 점유한 상태에서 중간 우선순위 <b>M</b>이 L을 선점하면, 높은 우선순위 <b>H</b>가 M 때문에 간접 지연된다. 실제 Pathfinder에서 시스템이 반복 재시작됐다.</div>
+        <div class="barrow"><span class="name" style="color:var(--dead)">H</span><div class="bar" id="barH" style="width:18%;background:var(--dead)"></div><span class="lvl">최고 — 하지만 차단됨</span></div>
+        <div class="barrow"><span class="name" style="color:var(--hungry)">M</span><div class="bar" style="width:60%;background:var(--hungry)"></div><span class="lvl">중간 — L을 선점해 무관하게 실행</span></div>
+        <div class="barrow"><span class="name" style="color:var(--think)">L</span><div class="bar" style="width:30%;background:var(--think)"></div><span class="lvl">최저 — 락 보유 중</span></div>
+        <div class="d" style="margin-top:8px;color:var(--eat)"><b>해결:</b> Priority Inheritance — L의 우선순위를 H 수준으로 일시 상승시켜 M의 선점을 막고, 락 해제 시 원래대로 복귀.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">KUS-TUDY · Big O(S) 스터디 활동 증빙 자료</div>
+
+<script>
+(function(){
+  const NS='http://www.w3.org/2000/svg';
+  const svg=document.getElementById('table');
+  const CX=210, CY=210, R=132, PHIL_R=34, CHOP_R=108;
+  const COL={THINKING:'#6ea8fe',HUNGRY:'#ffce6b',EATING:'#3ddc97',DEAD:'#ff6b81'};
+  const N=5;
+
+  // philosopher angle (start at top, clockwise)
+  function angP(i){ return (-90 + i*360/N) * Math.PI/180; }
+  // chopstick i sits between philosopher i and i+1
+  function angC(i){ return (-90 + (i+0.5)*360/N) * Math.PI/180; }
+
+  function el(tag,attrs){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+
+  let timer=null;
+
+  function drawBase(){
+    svg.innerHTML='';
+    // table top
+    svg.appendChild(el('circle',{cx:CX,cy:CY,r:88,fill:'#11182a',stroke:'#283353','stroke-width':2}));
+    svg.appendChild(el('circle',{cx:CX,cy:CY,r:60,fill:'#0d1424',stroke:'#283353','stroke-width':1.5}));
+    const t=el('text',{x:CX,y:CY-4,'text-anchor':'middle',fill:'#5b6a8f','font-size':'12','font-weight':'700'});
+    t.textContent='공유 테이블';
+    svg.appendChild(t);
+    const t2=el('text',{x:CX,y:CY+13,'text-anchor':'middle',fill:'#3a4566','font-size':'10.5'});
+    t2.textContent='젓가락 5개';
+    svg.appendChild(t2);
+  }
+
+  // state: phils array of state, chops array of owner (-1 none, else philosopher idx)
+  function render(states, chopOwner, held){
+    drawBase();
+    // draw chopsticks
+    for(let i=0;i<N;i++){
+      const a=angC(i);
+      const x=CX+Math.cos(a)*CHOP_R, y=CY+Math.sin(a)*CHOP_R;
+      const owned = chopOwner[i]>=0;
+      const g=el('g',{transform:`translate(${x},${y}) rotate(${(a*180/Math.PI)+90})`});
+      g.appendChild(el('rect',{x:-2.2,y:-15,width:4.4,height:30,rx:2,
+        fill: owned? '#ffe9a8':'#7d8aa8', stroke: owned?'#ffce6b':'#46527a','stroke-width':1}));
+      svg.appendChild(g);
+      // owner indicator dot
+      if(owned){
+        const od=el('circle',{cx:x,cy:y,r:3.5,fill:COL[states[chopOwner[i]]]||'#fff',opacity:0.0});
+        // subtle, skip
+      }
+    }
+    // draw philosophers
+    for(let i=0;i<N;i++){
+      const a=angP(i);
+      const x=CX+Math.cos(a)*R, y=CY+Math.sin(a)*R;
+      const st=states[i];
+      const c=COL[st];
+      const g=el('g',{});
+      // glow for eating
+      if(st==='EATING'){
+        g.appendChild(el('circle',{cx:x,cy:y,r:PHIL_R+6,fill:'none',stroke:c,'stroke-width':2,opacity:0.5}));
+      }
+      g.appendChild(el('circle',{cx:x,cy:y,r:PHIL_R,fill:'#11182a',stroke:c,'stroke-width':3}));
+      // face dot ring colored
+      g.appendChild(el('circle',{cx:x,cy:y-6,r:9,fill:c,opacity:0.9}));
+      // body
+      g.appendChild(el('path',{d:`M ${x-14} ${y+19} Q ${x} ${y+3} ${x+14} ${y+19}`,fill:c,opacity:0.85}));
+      svg.appendChild(g);
+      // label P0..P4
+      const lab=el('text',{x:x,y:y+5,'text-anchor':'middle',fill:'#0e1320','font-size':'12','font-weight':'800'});
+      // place number on body
+      const numT=el('text',{x:x,y:y-2,'text-anchor':'middle',fill:'#0e1320','font-size':'11','font-weight':'800'});
+      numT.textContent='P'+i;
+      svg.appendChild(numT);
+      // state text outside
+      const ox=CX+Math.cos(a)*(R+44), oy=CY+Math.sin(a)*(R+44);
+      const stT=el('text',{x:ox,y:oy,'text-anchor':'middle',fill:c,'font-size':'10.5','font-weight':'700'});
+      stT.textContent=st;
+      svg.appendChild(stT);
+    }
+  }
+
+  // ----- DEADLOCK animation: everyone grabs LEFT chopstick, then stuck -----
+  // left chopstick of philosopher i = chopstick i ; right = chopstick (i-1+N)%N (convention)
+  function runDeadlock(){
+    if(timer)clearInterval(timer);
+    let states=Array(N).fill('THINKING');
+    let chopOwner=Array(N).fill(-1);
+    render(states,chopOwner);
+    setStatus('thinking','● 사색 중 — 곧 모두 배고파집니다...');
+    let phase=0;
+    timer=setInterval(()=>{
+      if(phase===0){
+        states=states.map(()=> 'HUNGRY');
+        render(states,chopOwner);
+        setStatus('hungry','● 5명 모두 HUNGRY — 동시에 왼쪽 젓가락을 집으려 합니다');
+      }else if(phase>=1 && phase<=5){
+        const i=phase-1;
+        chopOwner[i]=i;           // each grabs its LEFT chopstick
+        render(states,chopOwner);
+        setStatus('hungry','● P'+i+' 가 왼쪽 젓가락'+i+'을 집음 — 오른쪽을 기다리는 중');
+      }else{
+        states=states.map(()=> 'DEAD');
+        render(states,chopOwner);
+        setStatus('dead','● DEADLOCK — 5명 모두 왼쪽을 쥔 채 오른쪽 젓가락을 영원히 대기 (순환 대기)');
+        clearInterval(timer);timer=null;
+      }
+      phase++;
+    },560);
+  }
+
+  // ----- SOLUTION (asymmetric): no deadlock, philosophers cycle through eating -----
+  function runAsym(){
+    if(timer)clearInterval(timer);
+    let states=Array(N).fill('THINKING');
+    let chopOwner=Array(N).fill(-1);
+    // schedule: non-adjacent philosophers eat in turns -> {0,2} then {1,3} then {4}
+    const waves=[[0,2],[1,3],[4],[2,0]];
+    let w=0;
+    render(states,chopOwner);
+    setStatus('ok','● 비대칭 방식 — 홀수는 왼쪽 먼저, 짝수는 오른쪽 먼저 → 순환 대기 차단');
+    timer=setInterval(()=>{
+      states=Array(N).fill('THINKING');
+      chopOwner=Array(N).fill(-1);
+      const eaters=waves[w%waves.length];
+      // mark some as hungry too
+      for(let i=0;i<N;i++) if(Math.random()<0.4 && eaters.indexOf(i)<0) states[i]='HUNGRY';
+      eaters.forEach(i=>{
+        states[i]='EATING';
+        chopOwner[i]=i;                 // left
+        chopOwner[(i-1+N)%N]=i;         // right -> both held, no conflict (non-adjacent)
+      });
+      render(states,chopOwner);
+      setStatus('ok','● 식사 중: '+eaters.map(x=>'P'+x).join(', ')+' — 인접하지 않아 충돌 없음. 교착·기아 없이 순환 식사');
+      w++;
+    },900);
+  }
+
+  function setStatus(kind,msg){
+    const s=document.getElementById('status');
+    s.className='statusbar '+(kind==='dead'?'dead':kind==='ok'?'ok':'');
+    s.textContent=msg;
+  }
+
+  const bDead=document.getElementById('bdead'), bOk=document.getElementById('bok');
+  bDead.onclick=()=>{bDead.classList.add('active');bDead.classList.remove('activeOk');bOk.classList.remove('activeOk');bOk.classList.remove('active');document.getElementById('chopwarn').textContent='각 철학자는 양쪽 젓가락을 모두 집어야 식사할 수 있습니다.';runDeadlock();};
+  bOk.onclick=()=>{bOk.classList.add('activeOk');bDead.classList.remove('active');document.getElementById('chopwarn').textContent='비대칭 방식으로 순환 대기가 깨져 교착이 발생하지 않습니다.';runAsym();};
+
+  // default on load: the DEADLOCK scenario, fully rendered so a single screenshot is meaningful
+  runDeadlock();
+})();
+</script>
+</body>
+</html>
