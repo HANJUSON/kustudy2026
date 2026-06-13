@@ -190,12 +190,15 @@
   .vs-quote{background:var(--primary);color:#fff;padding:12px 18px;font-size:15.5px;font-weight:700;letter-spacing:-0.3px;}
   .vs-quote .sub{display:block;font-size:12.5px;font-weight:400;color:rgba(255,255,255,.92);margin-top:5px;line-height:1.5;letter-spacing:-0.2px;}
 
+  @page{size:13.333in 7.5in;margin:0;}
   @media print{
-    body{overflow:visible;background:#fff;}
-    #nav,#hint,#progress{display:none;}
-    #stage{position:static;display:block;}
+    html,body{overflow:visible;background:#fff;width:1280px;height:auto;}
+    #nav,#hint,#progress{display:none!important;}
+    #stage{position:static;display:block;inset:auto;}
     #deck{transform:none!important;box-shadow:none;width:1280px;height:auto;}
-    .slide{display:flex!important;position:relative;page-break-after:always;border-bottom:1px solid #ccc;}
+    .slide{display:flex!important;position:relative;width:1280px;height:720px;overflow:hidden;
+      page-break-after:always;break-after:page;}
+    .slide:last-child{page-break-after:auto;break-after:auto;}
   }
 </style>
 </head>
