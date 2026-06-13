@@ -9,7 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --primary:#8B0029; --primary-deep:#6E0021; --primary-bright:#A30734; --gold:#B8860B;
+    --primary:#8B0029; --primary-deep:#6E0021; --primary-bright:#A30734;
+    --gold:#B49B57; --gold-deep:#8C7539; --gold-bright:#C9B074; --gold-soft:#F3EEDF; --on-gold:#5C001B;
     --ink:#222222; --body:#333333; --muted:#666666; --faint:#999999;
     --canvas:#ffffff; --warm:#f7f5f3; --gray:#f4f4f4;
     --charcoal:#2b2b2b; --crimson-deep:#5C001B; --footer:#1f1f1f;
@@ -60,6 +61,7 @@
   .tag{display:inline-block;font-size:12px;font-weight:700;color:#fff;background:var(--primary);
     padding:3px 10px;margin-bottom:10px;letter-spacing:0;}
   .tag.line{background:transparent;color:var(--primary);border:1px solid var(--primary);}
+  .honor{display:inline-block;background:var(--gold-soft);color:var(--on-gold);font-weight:700;font-size:.85em;padding:3px 10px;border-radius:4px;letter-spacing:0;vertical-align:middle;}
   .cols2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
   .cols3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;}
   .cols4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;}
@@ -106,6 +108,25 @@
   .gimgs figcaption{position:absolute;left:0;bottom:0;font-size:10px;font-weight:700;color:#fff;
     background:rgba(139,0,41,.88);padding:2px 6px;letter-spacing:0;}
   .gimgs figcaption.alt{background:rgba(43,43,43,.85);}
+  .gcard .gdesc{font-size:11.5px;color:var(--body);padding:7px 12px 8px;border-top:1px solid var(--hairline);line-height:1.4;letter-spacing:-0.2px;}
+  .projx{border:1.6px solid var(--primary);background:#fff;display:flex;flex-direction:column;}
+  .projx-head{background:var(--primary);color:#fff;padding:11px 16px;}
+  .projx-head .wk{display:block;font-size:11.5px;font-weight:500;color:rgba(255,255,255,.85);margin-bottom:2px;}
+  .projx-head .nm{font-size:23px;font-weight:800;letter-spacing:-0.5px;}
+  .projx-body{padding:13px 16px 14px;display:flex;flex-direction:column;}
+  .projx-def{font-size:14px;font-weight:700;color:var(--ink);line-height:1.55;margin-bottom:9px;}
+  .projx-body ul{list-style:none;margin-bottom:11px;}
+  .projx-body li{font-size:12.5px;color:var(--body);line-height:1.5;padding-left:13px;position:relative;margin:5px 0;}
+  .projx-body li::before{content:"·";position:absolute;left:3px;color:var(--primary);font-weight:700;}
+  .projx-body li b{color:var(--ink);}
+  .projx-imgs{display:flex;gap:7px;}
+  .projx-imgs figure{flex:1;height:92px;overflow:hidden;border:1px solid var(--hairline);}
+  .projx-imgs img{width:100%;height:100%;object-fit:cover;display:block;}
+  .projx-link{margin-top:10px;font-size:11.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .projx-link .lbl{background:var(--primary);color:#fff;font-weight:700;font-size:11px;padding:3px 9px;letter-spacing:-0.2px;white-space:nowrap;}
+  .projx-link .url{font-family:'Consolas','D2Coding',monospace;color:var(--primary-deep);
+    text-decoration:underline;text-underline-offset:2px;}
+  .projx-link .url:hover{color:var(--primary-bright);}
 
   /* ---- agenda ---- */
   .agenda{display:flex;flex-direction:column;gap:0;flex:1;justify-content:center;}
@@ -121,16 +142,53 @@
   .cover .ck{font-size:15px;font-weight:700;letter-spacing:.5px;color:rgba(255,255,255,.9);margin-bottom:18px;}
   .cover h1{font-family:var(--serif);font-size:84px;font-weight:700;letter-spacing:-1.5px;line-height:1.05;margin-bottom:18px;}
   .cover .subt{font-size:22px;font-weight:400;color:rgba(255,255,255,.92);letter-spacing:-0.3px;line-height:1.5;}
-  .cover .rule{width:70px;height:4px;background:#fff;margin:30px 0;}
+  .cover .rule{width:72px;height:4px;background:var(--gold-bright);margin:30px 0;}
   .cover .who{font-size:16px;color:rgba(255,255,255,.92);line-height:1.7;letter-spacing:-0.2px;}
   .cover .date{position:absolute;bottom:48px;right:86px;font-size:14px;color:rgba(255,255,255,.7);
     letter-spacing:0;font-variant-numeric:tabular-nums;}
   .cover .crest{position:absolute;top:46px;right:86px;text-align:right;font-size:13px;font-weight:700;
     letter-spacing:.5px;color:rgba(255,255,255,.85);line-height:1.5;}
+  .crest-badge{position:absolute;top:50%;right:84px;transform:translateY(-50%);background:#fff;
+    padding:20px 22px;border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.32);}
+  .crest-badge img{display:block;width:216px;height:auto;}
 
   .note{font-size:13px;color:var(--muted);line-height:1.62;border-left:3px solid var(--primary);
     padding:8px 0 8px 14px;background:var(--gray);padding-right:12px;}
   .band-warm .note{background:#fff;}
+  .note a{font-family:'Consolas','D2Coding',monospace;color:var(--primary-deep);font-weight:700;
+    text-decoration:underline;text-underline-offset:2px;}
+  .note a:hover{color:var(--primary-bright);}
+  .flow{display:flex;align-items:stretch;gap:10px;}
+  .fstep{flex:1;background:#fff;border:1.6px solid var(--primary);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;padding:16px 12px;}
+  .fstep .fn{width:28px;height:28px;background:var(--primary);color:#fff;font-weight:800;font-size:14px;
+    display:flex;align-items:center;justify-content:center;margin-bottom:9px;}
+  .fstep .ft{font-size:20px;font-weight:800;color:var(--primary);letter-spacing:-0.5px;}
+  .fstep .fd{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5;}
+  .fstep.final{background:var(--primary);border-color:var(--primary);}
+  .fstep.final .fn{background:#fff;color:var(--primary);}
+  .fstep.final .ft{color:#fff;}
+  .fstep.final .fd{color:rgba(255,255,255,.92);}
+  .farrow{display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:var(--primary);width:24px;flex:none;}
+  .floop{margin-top:12px;text-align:center;font-size:13.5px;font-weight:700;color:var(--primary);
+    background:var(--gray);border:1px dashed var(--primary);padding:9px;letter-spacing:-0.3px;}
+  .flow-cap{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:12px;}
+  .vs{display:flex;align-items:stretch;gap:0;margin:12px 0 14px;}
+  .vs-col{flex:1;border:1px solid var(--hairline);padding:13px 16px;}
+  .vs-col.past{background:var(--gray);}
+  .vs-col.now{background:#fff;border:1.6px solid var(--primary);}
+  .vs-col .vh{font-size:12.5px;font-weight:700;margin-bottom:8px;letter-spacing:-0.2px;}
+  .vs-col.past .vh{color:var(--muted);}
+  .vs-col.now .vh{color:var(--primary);}
+  .vs-col ul{list-style:none;}
+  .vs-col li{font-size:14.5px;line-height:1.65;padding-left:14px;position:relative;}
+  .vs-col li::before{content:"·";position:absolute;left:3px;font-weight:700;}
+  .vs-col.past li{color:var(--muted);}
+  .vs-col.now li{color:var(--body);}
+  .vs-col.now li b{color:var(--ink);}
+  .vs-arrow{display:flex;align-items:center;justify-content:center;width:52px;flex:none;font-size:34px;font-weight:700;color:var(--primary);}
+  .vs-quote{background:var(--primary);color:#fff;padding:12px 18px;font-size:15.5px;font-weight:700;letter-spacing:-0.3px;}
+  .vs-quote .sub{display:block;font-size:12.5px;font-weight:400;color:rgba(255,255,255,.92);margin-top:5px;line-height:1.5;letter-spacing:-0.2px;}
 
   @media print{
     body{overflow:visible;background:#fff;}
@@ -150,9 +208,10 @@
   <!-- 1 COVER -->
   <section class="slide band-crimson active">
     <div class="cover">
-      <div class="crest">KOREA UNIVERSITY<br>과학기술대학 · KUS-TUDY</div>
+      <div class="crest-badge"><img src="koreauniv.png" alt="고려대학교 교표"></div>
+      <div class="crest">과학기술대학 · KUS-TUDY</div>
       <div class="motto">LIBERTAS · JUSTITIA · VERITAS</div>
-      <div class="ck">2026-1 KUS-TUDY · 우수그룹 자기추천서</div>
+      <div class="ck"><span class="honor">우수그룹</span> 2026-1 KUS-TUDY · 자기추천서</div>
       <h1>Big O(S)</h1>
       <div class="subt">알고리즘 × 운영체제 × LLM<br>강의에서 배운 이론을 매주 '동작하는 코드'로 구현한 한 학기</div>
       <div class="rule"></div>
@@ -192,7 +251,27 @@
       </div>
       <div class="card">
         <span class="tag line">참여계기 및 동기</span>
-        <div class="lead">우리 4명은 모두 군휴학 후 올해 복학하였다. 2년 전만 해도 AI는 커닝을 위한 도구에 불과했지만, 2년이 지난 지금 AI는 개발자에게 없어서는 안 될 생산 도구가 되었다. 뒤처진 기술 트렌드를 따라잡기 위해, AI를 적극 활용하는 알고리즘·운영체제 수업을 통해 컴퓨터 과학 전공 지식과 기술 활용 능력을 함양한다.</div>
+        <div class="lead" style="font-size:15px;margin-bottom:2px;">우리 4명은 모두 <b>군휴학 후 올해 복학</b>하였다 — 2년의 공백 사이, 기술 트렌드는 완전히 달라져 있었다.</div>
+        <div class="vs">
+          <div class="vs-col past">
+            <div class="vh">2년 전 · 입대 전</div>
+            <ul>
+              <li>AI는 '커닝'을 위한 도구일 뿐</li>
+              <li>최신 개발 트렌드와 멀어짐</li>
+            </ul>
+          </div>
+          <div class="vs-arrow">→</div>
+          <div class="vs-col now">
+            <div class="vh">복학 후 · 지금</div>
+            <ul>
+              <li>AI는 <b>없어서는 안 될 생산 도구</b></li>
+              <li>직접 만들며 <b>적극 활용</b></li>
+            </ul>
+          </div>
+        </div>
+        <div class="vs-quote">“뒤처진 2년의 공백을 한 학기로 따라잡다”
+          <span class="sub">AI를 적극 활용하는 알고리즘·운영체제 학습으로 컴퓨터 과학 전공 지식과 기술 활용 능력을 함양한다.</span>
+        </div>
       </div>
     </div>
     <div class="pageno">03</div>
@@ -226,20 +305,33 @@
       <div class="kicker">02 · 학습 목표</div>
       <div class="s-title">전체 팀 목표 · STUDY 영역</div>
       <div class="s-rule"></div>
-      <div class="cols2 grow" style="align-items:start;">
-        <div class="card" style="height:100%;">
+      <div class="cols2" style="align-items:stretch;">
+        <div class="card">
           <span class="tag">전체 팀 목표</span>
-          <div class="lead" style="font-size:15.5px;">매주 강의에서 배운 알고리즘·운영체제 핵심 개념을 곧바로 동작하는 코드·웹앱·시스템으로 구현하여, 개념에 대한 깊은 이해와 실전 응용 능력을 동시에 기른다. 학기 후반에는 LLM(Upstage Solar)을 결합한 팀 프로젝트로 학습 성과를 집약해 실제 결과물을 도출하고, LLM 기반 개발 방식에 적응하는 것을 전체 목표로 삼는다. 이 과정에서 <b>'이론 → 구현 → 검증'</b>의 사이클을 팀의 표준 학습법으로 정착시킨다.</div>
+          <div class="lead" style="font-size:14.5px;">매주 강의에서 배운 알고리즘·운영체제 핵심 개념을 곧바로 '동작하는 코드·웹앱·시스템'으로 구현해 깊은 이해와 실전 응용 능력을 함께 기르고, 학기 후반에는 LLM(Upstage Solar)을 결합한 팀 프로젝트로 학습 성과를 집약하는 것을 목표로 한다.</div>
         </div>
-        <div class="card" style="height:100%;">
+        <div class="card">
           <span class="tag line">STUDY 영역</span>
           <ul class="b">
-            <li><b>알고리즘</b> : 분할 정복, 동적 계획법, 탐욕법, 정렬/탐색, 탐색 트리(BST/RBT/B-트리), 해싱, 그래프</li>
-            <li><b>운영체제</b> : 프로세스/스레드, CPU 스케줄링, 동기화, 대용량 저장장치, xv6 커널 직접 수정</li>
-            <li><b>응용</b> : LLM(Upstage Solar Pro)·AI 협업 도구(Claude Code, NVIDIA NIM)를 결합한 웹·시스템 프로젝트</li>
-            <li><b>학습 교재</b> : 『Introduction to Algorithms』(Thomas H. Cormen 외) · 『Operating System Concepts』(Abraham Silberschatz 외)</li>
+            <li><b>알고리즘</b> 분할정복·동적계획법·탐욕법·정렬/탐색·탐색 트리·해싱·그래프</li>
+            <li><b>운영체제</b> 프로세스/스레드·CPU 스케줄링·동기화·저장장치·xv6 커널 수정</li>
+            <li><b>응용·교재</b> LLM(Upstage Solar)·Claude Code · 『Introduction to Algorithms』·『Operating System Concepts』</li>
           </ul>
         </div>
+      </div>
+
+      <div class="grow" style="display:flex;flex-direction:column;justify-content:center;margin-top:10px;">
+        <div class="flow-cap">학습 사이클 — 이론을 매주 '동작하는 결과물'로 옮기는 단계</div>
+        <div class="flow">
+          <div class="fstep"><div class="fn">1</div><div class="ft">이론</div><div class="fd">강의·교과서<br>핵심 개념 정리</div></div>
+          <div class="farrow">→</div>
+          <div class="fstep"><div class="fn">2</div><div class="ft">구현</div><div class="fd">코드·웹앱·시스템<br>직접 제작</div></div>
+          <div class="farrow">→</div>
+          <div class="fstep"><div class="fn">3</div><div class="ft">검증</div><div class="fd">실행·측정·비교로<br>수치 확인</div></div>
+          <div class="farrow">→</div>
+          <div class="fstep final"><div class="fn">★</div><div class="ft">집약</div><div class="fd">LLM 프로젝트 2종<br>Liberal_algorithm · Liberal_OS</div></div>
+        </div>
+        <div class="floop">↻ 매주 반복 — '이론 → 구현 → 검증' 사이클을 팀의 표준 학습법으로 정착</div>
       </div>
     </div>
     <div class="pageno">05</div>
@@ -272,7 +364,7 @@
         <thead><tr><th style="width:42px;">주차</th><th style="width:84px;">일시</th><th style="width:150px;">주제</th><th>핵심 학습·활동 내용</th><th style="width:210px;">결과물</th></tr></thead>
         <tbody>
           <tr><td class="wk">1</td><td class="dt">2026.03.29</td><td class="tp">분할 정복 패러다임</td><td>가장 가까운 두 점 쌍(Closest Pair)을 완전탐색 O(n²) vs 분할정복 O(n log²n)으로 구현, 점 100/1000/10000개별 소요시간 비교</td><td class="out">FastAPI+Canvas 웹앱</td></tr>
-          <tr><td class="wk">2</td><td class="dt">2026.03.31</td><td class="tp">멀티스레딩·암달의 법칙</td><td>1,000만 정수 히스토그램을 Pthreads로 병렬 계산, 로컬 히스토그램으로 race condition 회피, 1/2/4/8 스레드 speedup(8스레드 2.35배·메모리 대역폭 병목) 측정</td><td class="out"><code>histogram.c</code> · <b>퀴즈 전원 만점</b></td></tr>
+          <tr><td class="wk">2</td><td class="dt">2026.03.31</td><td class="tp">멀티스레딩·암달의 법칙</td><td>1,000만 정수 히스토그램을 Pthreads로 병렬 계산, 로컬 히스토그램으로 race condition 회피, 1/2/4/8 스레드 speedup(8스레드 2.35배·메모리 대역폭 병목) 측정</td><td class="out"><code>histogram.c</code> · <span class="honor">퀴즈 전원 만점</span></td></tr>
           <tr><td class="wk">3</td><td class="dt">2026.04.11</td><td class="tp">동적 프로그래밍(DP)</td><td>LCS 점화식 기반 표절 검사기 웹앱 제작, "ALGORITHM"vs"ALTRUISTIC" 유사도 50% 도출, O(nm) 특성 확인</td><td class="out">표절 검사기 웹앱</td></tr>
           <tr><td class="wk">4</td><td class="dt">2026.04.18</td><td class="tp">CPU 스케줄링 시뮬레이션</td><td>FCFS/SJF/Round Robin을 Gantt 차트와 함께 시뮬레이션, 평균 대기/반환 시간 정량 비교(SJF 최적)</td><td class="out">CPU 스케줄링 시뮬레이터 + 성능 비교 대시보드(HTML 2종)</td></tr>
           <tr><td class="wk">5</td><td class="dt">2026.04.26</td><td class="tp">중간고사 대비</td><td>오픈북 대비 교과서(OS Concepts 10판 Ch.1~5) 정독·인덱싱, NotebookLM 예상질문 도출·답변, xv6 소스 구조 사전 탐색</td><td class="out">시험 대비 정리본·요약 이미지</td></tr>
@@ -310,19 +402,19 @@
       <div class="kicker">03 · 주차별 학습 내용</div>
       <div class="s-title">주차별 활동 · 결과물 사진 &nbsp;<span style="font-size:15px;font-weight:400;color:var(--muted);">1 ~ 6주차</span></div>
       <div class="s-rule"></div>
-      <div class="gal grow" style="grid-template-columns:1fr 1fr 1fr;grid-auto-rows:min-content;">
+      <div class="gal grow" style="grid-template-columns:1fr 1fr 1fr;grid-auto-rows:1fr;gap:18px;">
         <div class="gcard"><div class="gh"><span class="gw">1주차</span><span class="gt">분할 정복</span></div>
-          <div class="gimgs"><figure><img src="week01/KakaoTalk_20260329_094403610.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week01/WebApplication.png" alt=""><figcaption class="alt">결과물</figcaption></figure><figure><img src="week01/image01.png" alt=""><figcaption class="alt">실행1</figcaption></figure><figure><img src="week01/image02.png" alt=""><figcaption class="alt">실행2</figcaption></figure></div></div>
+          <div class="gimgs"><figure><img src="week01/image01.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week01/WebApplication.png" alt=""><figcaption class="alt">결과물</figcaption></figure><figure><img src="week01/KakaoTalk_20260329_094403610.png" alt=""><figcaption class="alt">실행1</figcaption></figure><figure><img src="week01/image02.png" alt=""><figcaption class="alt">실행2</figcaption></figure></div><div class="gdesc">완전탐색 vs 분할정복 속도를 비교한 Closest Pair 웹앱</div></div>
         <div class="gcard"><div class="gh"><span class="gw">2주차</span><span class="gt">멀티스레딩·암달</span></div>
-          <div class="gimgs"><figure><img src="week02/KakaoTalk_20260405_002024080.jpg" alt=""><figcaption>활동</figcaption></figure><figure><img src="week02/스크린샷%202026-04-05%20002922.png" alt=""><figcaption class="alt">증빙</figcaption></figure></div></div>
+          <div class="gimgs"><figure><img src="week02/KakaoTalk_20260405_002024080.jpg" alt=""><figcaption>활동</figcaption></figure><figure><img src="week02/스크린샷%202026-04-05%20002922.png" alt=""><figcaption class="alt">증빙</figcaption></figure></div><div class="gdesc">멀티스레드로 1,000만 정수를 병렬 계산해 speedup 측정</div></div>
         <div class="gcard"><div class="gh"><span class="gw">3주차</span><span class="gt">DP·표절검사기</span></div>
-          <div class="gimgs"><figure><img src="week03/KakaoTalk_20260411_172810443.jpg" alt=""><figcaption>활동</figcaption></figure><figure><img src="week03/KakaoTalk_20260412_220237292.jpg" alt=""><figcaption class="alt">결과물</figcaption></figure></div></div>
+          <div class="gimgs"><figure><img src="week03/KakaoTalk_20260412_220237292.jpg" alt=""><figcaption>활동</figcaption></figure><figure><img src="week03/KakaoTalk_20260412_220237292_01.jpg" alt=""><figcaption>활동</figcaption></figure><figure><img src="week03/image01.png" alt=""><figcaption class="alt">결과물</figcaption></figure></div><div class="gdesc">LCS로 문서 유사도를 재는 표절 검사기 제작·실행</div></div>
         <div class="gcard"><div class="gh"><span class="gw">4주차</span><span class="gt">CPU 스케줄링</span></div>
-          <div class="gimgs"><figure><img src="week04/KakaoTalk_20260418_130304926.jpg" alt=""><figcaption>활동</figcaption></figure><figure><img src="week04/스크린샷%202026-06-12%20230936.png" alt=""><figcaption class="alt">시뮬레이터</figcaption></figure><figure><img src="week04/스크린샷%202026-06-12%20231025.png" alt=""><figcaption class="alt">비교</figcaption></figure></div></div>
+          <div class="gimgs"><figure><img src="week04/KakaoTalk_20260418_130304926.jpg" alt=""><figcaption>활동</figcaption></figure><figure><img src="week04/스크린샷%202026-06-12%20230936.png" alt=""><figcaption class="alt">시뮬레이터</figcaption></figure><figure><img src="week04/스크린샷%202026-06-12%20231025.png" alt=""><figcaption class="alt">비교</figcaption></figure></div><div class="gdesc">FCFS·SJF·RR을 간트 차트로 비교한 스케줄링 시뮬레이터</div></div>
         <div class="gcard"><div class="gh"><span class="gw">5주차</span><span class="gt">중간고사 대비</span></div>
-          <div class="gimgs"><figure><img src="week05/KakaoTalk_20260426_171527811.jpg" alt=""><figcaption>활동</figcaption></figure><figure><img src="week05/Algorithm_Exam_Study_Guide_Full_page-0001.jpg" alt=""><figcaption class="alt">알고리즘</figcaption></figure><figure><img src="week05/OS_Exam_Study_Guide_Full_page-0001.jpg" alt=""><figcaption class="alt">운영체제</figcaption></figure></div></div>
+          <div class="gimgs"><figure><img src="week05/KakaoTalk_20260426_171527811.jpg" alt=""><figcaption>활동</figcaption></figure><figure><img src="week05/Algorithm_Exam_Study_Guide_Full_page-0001.jpg" alt=""><figcaption class="alt">알고리즘</figcaption></figure><figure><img src="week05/OS_Exam_Study_Guide_Full_page-0001.jpg" alt=""><figcaption class="alt">운영체제</figcaption></figure></div><div class="gdesc">오픈북 시험 대비 알고리즘·운영체제 핵심 개념 정리본</div></div>
         <div class="gcard"><div class="gh"><span class="gw">6주차</span><span class="gt">탐색 트리</span></div>
-          <div class="gimgs"><figure><img src="week06/KakaoTalk_20260503_204118322.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week06/스크린샷%202026-06-12%20231137.png" alt=""><figcaption class="alt">BST·RBT</figcaption></figure><figure><img src="week06/스크린샷%202026-06-12%20231204.png" alt=""><figcaption class="alt">B-트리</figcaption></figure></div></div>
+          <div class="gimgs"><figure><img src="week06/KakaoTalk_20260503_204118322.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week06/스크린샷%202026-06-12%20231137.png" alt=""><figcaption class="alt">BST·RBT</figcaption></figure><figure><img src="week06/스크린샷%202026-06-12%20231204.png" alt=""><figcaption class="alt">B-트리</figcaption></figure></div><div class="gdesc">BST·레드블랙·B-트리의 균형 유지 원리를 비교한 시각화</div></div>
       </div>
     </div>
     <div class="pageno">09</div>
@@ -334,21 +426,21 @@
       <div class="kicker">03 · 주차별 학습 내용</div>
       <div class="s-title">주차별 활동 · 결과물 사진 &nbsp;<span style="font-size:15px;font-weight:400;color:var(--muted);">7 ~ 12주차</span></div>
       <div class="s-rule"></div>
-      <div class="gal" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="gal grow" style="grid-template-columns:1fr 1fr 1fr;grid-auto-rows:1fr;gap:18px;">
         <div class="gcard"><div class="gh"><span class="gw">7주차</span><span class="gt">동기화</span></div>
-          <div class="gimgs"><figure><img src="week07/1.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week07/스크린샷%202026-06-12%20231249.png" alt=""><figcaption class="alt">Race</figcaption></figure><figure><img src="week07/스크린샷%202026-06-12%20231258.png" alt=""><figcaption class="alt">철학자</figcaption></figure></div></div>
+          <div class="gimgs"><figure><img src="week07/1.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week07/스크린샷%202026-06-12%20231249.png" alt=""><figcaption class="alt">Race</figcaption></figure><figure><img src="week07/스크린샷%202026-06-12%20231258.png" alt=""><figcaption class="alt">철학자</figcaption></figure></div><div class="gdesc">경쟁 상태·세마포어·식사하는 철학자 문제 시각화</div></div>
         <div class="gcard"><div class="gh"><span class="gw">8주차</span><span class="gt">V 모델</span></div>
-          <div class="gimgs"><figure><img src="week08/KakaoTalk_20260517_150607351.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week08/스크린샷%202026-06-12%20231318.png" alt=""><figcaption class="alt">V모델</figcaption></figure><figure><img src="week08/스크린샷%202026-06-12%20231324.png" alt=""><figcaption class="alt">체크리스트</figcaption></figure></div></div>
+          <div class="gimgs"><figure><img src="week08/KakaoTalk_20260517_150607351.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week08/스크린샷%202026-06-12%20231318.png" alt=""><figcaption class="alt">V모델</figcaption></figure><figure><img src="week08/스크린샷%202026-06-12%20231324.png" alt=""><figcaption class="alt">체크리스트</figcaption></figure></div><div class="gdesc">요구사항↔테스트가 대응하는 V 모델 다이어그램</div></div>
         <div class="gcard"><div class="gh"><span class="gw">9주차</span><span class="gt">팀프로젝트 분석</span></div>
-          <div class="gimgs"><figure><img src="week09/1.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week09/스크린샷%202026-05-24%20165036.png" alt=""><figcaption class="alt">YouTube</figcaption></figure><figure><img src="week09/스크린샷%202026-06-12%20231346.png" alt=""><figcaption class="alt">파이프라인</figcaption></figure><figure><img src="week09/스크린샷%202026-06-12%20231351.png" alt=""><figcaption class="alt">매핑</figcaption></figure></div></div>
+          <div class="gimgs"><figure><img src="week09/1.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week09/스크린샷%202026-05-24%20165036.png" alt=""><figcaption class="alt">YouTube</figcaption></figure><figure><img src="week09/스크린샷%202026-06-12%20231346.png" alt=""><figcaption class="alt">파이프라인</figcaption></figure><figure><img src="week09/스크린샷%202026-06-12%20231351.png" alt=""><figcaption class="alt">매핑</figcaption></figure></div><div class="gdesc">YouTube 분석기의 6단계 점수 파이프라인을 알고리즘별로 분석</div></div>
         <div class="gcard"><div class="gh"><span class="gw">10주차</span><span class="gt">저장장치</span></div>
-          <div class="gimgs"><figure><img src="week10/스크린샷%202026-05-31%20193515%20(1).png" alt=""><figcaption>온라인1</figcaption></figure><figure><img src="week10/스크린샷%202026-05-31%20193535.png" alt=""><figcaption>온라인2</figcaption></figure><figure><img src="week10/스크린샷%202026-06-12%20231414.png" alt=""><figcaption class="alt">디스크</figcaption></figure><figure><img src="week10/스크린샷%202026-06-12%20231418.png" alt=""><figcaption class="alt">RAID</figcaption></figure></div></div>
+          <div class="gimgs"><figure><img src="week10/스크린샷%202026-05-31%20193515%20(1).png" alt=""><figcaption>온라인1</figcaption></figure><figure><img src="week10/스크린샷%202026-05-31%20193535.png" alt=""><figcaption>온라인2</figcaption></figure><figure><img src="week10/스크린샷%202026-06-12%20231414.png" alt=""><figcaption class="alt">디스크</figcaption></figure><figure><img src="week10/스크린샷%202026-06-12%20231418.png" alt=""><figcaption class="alt">RAID</figcaption></figure></div><div class="gdesc">디스크 헤드 이동·RAID 레벨을 비교한 스토리지 시각화</div></div>
         <div class="gcard"><div class="gh"><span class="gw">11주차</span><span class="gt">알고리즘+LLM</span></div>
-          <div class="gimgs"><figure><img src="week11/KakaoTalk_20260607_202011807.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week11/기본화면.png" alt=""><figcaption class="alt">기본</figcaption></figure><figure><img src="week11/취향%20기반%20추천.png" alt=""><figcaption class="alt">추천</figcaption></figure><figure><img src="week11/채널%20추천.png" alt=""><figcaption class="alt">채널</figcaption></figure><figure><img src="week11/페르소나.png" alt=""><figcaption class="alt">페르소나</figcaption></figure></div></div>
+          <div class="gimgs"><figure><img src="week11/KakaoTalk_20260607_202011807.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week11/기본화면.png" alt=""><figcaption class="alt">기본</figcaption></figure><figure><img src="week11/취향%20기반%20추천.png" alt=""><figcaption class="alt">추천</figcaption></figure><figure><img src="week11/채널%20추천.png" alt=""><figcaption class="alt">채널</figcaption></figure><figure><img src="week11/페르소나.png" alt=""><figcaption class="alt">페르소나</figcaption></figure></div><div class="gdesc">Liberal_algorithm 실행 — 추천·채널·페르소나 화면</div></div>
         <div class="gcard"><div class="gh"><span class="gw">12주차</span><span class="gt">xv6 멀티에이전트 OS</span></div>
-          <div class="gimgs"><figure><img src="week12/screenshot2.png" alt=""><figcaption class="alt">25콜</figcaption></figure><figure><img src="week12/screenshot3.png" alt=""><figcaption class="alt">트레이스</figcaption></figure></div></div>
+          <div class="gimgs"><figure><img src="week12/KakaoTalk_20260613_163715750.png" alt=""><figcaption>활동</figcaption></figure><figure><img src="week12/screenshot2.png" alt=""><figcaption class="alt">25콜</figcaption></figure><figure><img src="week12/screenshot3.png" alt=""><figcaption class="alt">트레이스</figcaption></figure><figure><img src="week12/2026-06-13%2016-40-03.png" alt=""><figcaption class="alt">증빙</figcaption></figure></div><div class="gdesc">Liberal_OS 실행 — 25콜 파이프라인·live 트레이스</div></div>
       </div>
-      <div class="note" style="margin-top:14px;">활동사진은 온라인 스터디 활동(화상 회의·공유 화면) 캡처도 인정된다(10주차 적용). 12주차 활동사진은 아직 준비되지 않아 추후 추가 예정이다.</div>
+      <div class="note" style="margin-top:14px;">일정이 맞을 때는 최대한 <b>오프라인 모임</b>으로 진행해 학습 효과를 높이려 노력했고, 일정이 어긋날 때는 <b>온라인 스터디</b>(화상 회의·공유 화면)로 보완하여 매주 빠짐없이 활동을 이어갔다.</div>
     </div>
     <div class="pageno">10</div>
   </section>
@@ -378,6 +470,7 @@
           </ul>
         </div>
       </div>
+      <div class="note" style="margin-top:14px;">위 <code>weekNN.md</code> 주차별 보고서를 비롯한 모든 활동 기록·결과물은 팀 GitHub 레포지토리에서 직접 확인할 수 있다 → <a href="https://github.com/HANJUSON/kustudy2026" target="_blank" rel="noopener">https://github.com/HANJUSON/kustudy2026</a></div>
     </div>
     <div class="pageno">11</div>
   </section>
@@ -386,33 +479,45 @@
   <section class="slide band-warm">
     <div class="pad">
       <div class="kicker">04 · 학습목표를 위한 노력 · 전략</div>
-      <div class="s-title">학습 결과물 · 추가 활동 &nbsp;·&nbsp; 증빙</div>
+      <div class="s-title">핵심 결과물 — 최종 프로젝트 2종</div>
       <div class="s-rule"></div>
-      <div class="cols2" style="align-items:start;margin-bottom:16px;">
-        <div class="card">
-          <span class="tag">학습 결과물 정리본 · 추가 활동</span>
-          <ul class="b small">
-            <li><b>주차별 보고서</b> : <code>week01.md ~ week12.md</code></li>
-            <li><b>최종 프로젝트 2종</b> : Liberal_algorithm(알고리즘+LLM) · Liberal_OS(xv6 직접 수정, 신규 시스템 콜 12개(22–33)·regression 게이트·기술 보고서 포함)</li>
-            <li><b>실습 코드</b> : <code>histogram.c</code>, <code>matmul.c</code>·<code>mergesort.c</code>, 주차별 웹앱</li>
-          </ul>
-        </div>
-        <div class="card">
-          <span class="tag line">그 외 노력 · 전략</span>
-          <ul class="b small">
-            <li><b>AI 협업 적극 활용</b> : Claude Code, Upstage Solar API, NVIDIA NIM으로 코드 리뷰·복잡도 최적화·문서화, 과정 로그를 학습 기록으로 남김</li>
-            <li><b>이론→실증의 정량화</b> : 암달의 법칙 speedup, 스케줄링 평균 대기/반환 시간, 알고리즘별 소요시간을 직접 측정·비교</li>
-          </ul>
+      <div class="grow" style="display:flex;flex-direction:column;justify-content:center;">
+        <div class="cols2" style="align-items:stretch;gap:20px;">
+          <div class="projx">
+            <div class="projx-head"><span class="wk">11주차 · 알고리즘 + 생성형 AI</span><span class="nm">Liberal_algorithm</span></div>
+            <div class="projx-body">
+              <div class="projx-def">강의에서 배운 알고리즘을 직접 구현하고, 거기에 생성형 AI(LLM)를 결합해 만든 'YouTube 채널 추천' 프로그램</div>
+              <ul>
+                <li>정렬·탐색·그래프 알고리즘으로 채널을 점수화하고 비슷한 취향끼리 묶음</li>
+                <li>그 위에 AI가 <b>추천 이유·페르소나·요약</b>을 사람의 말로 생성</li>
+                <li>정확한 계산은 알고리즘, 자연어 설명은 AI — <b>역할을 나눠</b> 신뢰성 확보</li>
+              </ul>
+              <div class="projx-imgs">
+                <figure><img src="week11/취향%20기반%20추천.png" alt=""></figure>
+                <figure><img src="week11/페르소나.png" alt=""></figure>
+              </div>
+              <div class="projx-link"><span class="lbl">전체 코드·결과물 보기</span><a class="url" href="https://github.com/HANJUSON/Liberal_algorithm" target="_blank" rel="noopener">https://github.com/HANJUSON/Liberal_algorithm</a></div>
+            </div>
+          </div>
+          <div class="projx">
+            <div class="projx-head"><span class="wk">12주차 · 운영체제(OS)</span><span class="nm">Liberal_OS</span></div>
+            <div class="projx-body">
+              <div class="projx-def">컴퓨터를 움직이는 기본 소프트웨어인 운영체제(xv6)를 직접 수정해 만든 'AI를 위한 운영체제'</div>
+              <ul>
+                <li>5개의 AI가 차례로 로그를 분석 — 그 <b>순서·메모리·검증</b>을 운영체제가 직접 통제</li>
+                <li><b>"AI는 제안, 최종 결정은 운영체제"</b> — 틀린 답은 되돌리고 같은 질문은 저장해 재사용</li>
+                <li>교과서로 배우는 운영체제의 핵심 코드(커널)를 학생이 <b>직접 수정</b></li>
+              </ul>
+              <div class="projx-imgs">
+                <figure><img src="week12/screenshot2.png" alt=""></figure>
+                <figure><img src="week12/screenshot3.png" alt=""></figure>
+              </div>
+              <div class="projx-link"><span class="lbl">전체 코드·결과물 보기</span><a class="url" href="https://github.com/HANJUSON/Liberal_OS" target="_blank" rel="noopener">https://github.com/HANJUSON/Liberal_OS</a></div>
+            </div>
+          </div>
         </div>
       </div>
-      <span class="tag" style="margin-bottom:10px;">증빙 — 최종 프로젝트 실행 결과</span>
-      <div class="gal" style="grid-template-columns:repeat(4,1fr);gap:14px;">
-        <div class="gcard"><div class="gimgs" style="grid-template-columns:1fr;"><figure style="height:150px;"><img src="week11/취향%20기반%20추천.png" alt=""><figcaption class="alt">Liberal_algorithm · 추천</figcaption></figure></div></div>
-        <div class="gcard"><div class="gimgs" style="grid-template-columns:1fr;"><figure style="height:150px;"><img src="week11/페르소나.png" alt=""><figcaption class="alt">Liberal_algorithm · 페르소나</figcaption></figure></div></div>
-        <div class="gcard"><div class="gimgs" style="grid-template-columns:1fr;"><figure style="height:150px;"><img src="week12/screenshot2.png" alt=""><figcaption class="alt">Liberal_OS · 25콜 파이프라인</figcaption></figure></div></div>
-        <div class="gcard"><div class="gimgs" style="grid-template-columns:1fr;"><figure style="height:150px;"><img src="week12/screenshot3.png" alt=""><figcaption class="alt">Liberal_OS · live 트레이스</figcaption></figure></div></div>
-      </div>
-      <div class="note" style="margin-top:14px;">그 외 증빙 — <b>학업 성과</b>: 알고리즘·운영체제 시험 대비 정리본(5주차) · <b>직접 구현 결과물 시각화</b>: 4·6·7·8·9·10주차 HTML 화면(§3 갤러리) · <b>GitHub</b>: 두 레포 커밋 이력·파일 트리 캡처</div>
+      <div class="note" style="margin-top:14px;">그 외 학습 결과물·노력 — 주차별 보고서(<code>week01~12.md</code>)·실습 코드 · AI 협업(Claude Code·Upstage Solar)로 코드 리뷰·문서화 · 암달의 법칙 speedup·스케줄링 시간 등 <b>정량 측정</b> · 시험 정리본·GitHub 커밋 증빙</div>
     </div>
     <div class="pageno">12</div>
   </section>
@@ -481,6 +586,7 @@
           <span class="tag">스터디 마무리 후 활동 계획</span>
           <ul class="b">
             <li>기말고사 대비를 위해 6~12주차에서 다룬 <b>탐색 트리·동기화·저장장치·스케줄링</b> 개념을 종합 복습하고, 각 주차 결과물을 시험 관점에서 재정리한다.</li>
+            <li>스터디가 끝난 뒤에도 <b>팀원들이 주기적으로 모여</b>, 한 학기 동안 쌓은 알고리즘·운영체제·LLM 역량을 살려 <b>다양한 공모전·해커톤에 꾸준히 출품</b>하는 활동을 이어간다.</li>
           </ul>
         </div>
         <div class="card" style="height:100%;">
@@ -516,7 +622,8 @@
   <!-- 17 CLOSING -->
   <section class="slide band-crimson">
     <div class="cover">
-      <div class="crest">KOREA UNIVERSITY · KUS-TUDY</div>
+      <div class="crest-badge"><img src="koreauniv.png" alt="고려대학교 교표"></div>
+      <div class="crest">과학기술대학 · KUS-TUDY</div>
       <div class="motto">LIBERTAS · JUSTITIA · VERITAS</div>
       <div class="ck">감사합니다</div>
       <h1 style="font-size:64px;">이론을 코드로,<br>코드를 커널까지</h1>

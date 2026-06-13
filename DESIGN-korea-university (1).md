@@ -1,14 +1,19 @@
 ---
 version: alpha
 name: Korea-University-design-analysis
-description: A crimson-anchored institutional interface that reads like an academic crest rendered in web form. KU Crimson (#8B0029, PANTONE 202C) carries every brand moment — headers, section titles, CTAs — over a calm white-and-warm-gray canvas. Photography of granite campus architecture supplies gravitas; UI chrome stays rectangular and quiet. Dense mega-menu navigation, card-grid news surfaces, and a deep multi-column footer follow the Korean university portal grammar, but with a single non-negotiable accent and a custom display typeface (고려대학교체) that no other institution can wear.
+description: A crimson-anchored institutional interface that reads like an academic crest rendered in web form. KU Crimson (#8B0029, PANTONE 202C) carries every brand moment — headers, section titles, CTAs — paired with the heraldic Old Gold (#B49B57) that fills the signature tiger-crest shield, over a calm white-and-warm-gray canvas. Photography of granite campus architecture supplies gravitas; UI chrome stays rectangular and quiet. Dense mega-menu navigation, card-grid news surfaces, and a deep multi-column footer follow the Korean university portal grammar, but with the crimson-and-gold crest palette and a custom display typeface (고려대학교체) that no other institution can wear.
 
 colors:
   primary: "#8B0029"
   primary-deep: "#6E0021"
   primary-bright: "#A30734"
   primary-print: "#862633"
-  accent-gold: "#B8860B"
+  secondary-gold: "#B49B57"
+  secondary-gold-deep: "#8C7539"
+  secondary-gold-bright: "#C9B074"
+  surface-gold: "#B49B57"
+  surface-gold-soft: "#F3EEDF"
+  on-gold: "#5C001B"
   ink: "#222222"
   body: "#333333"
   body-on-dark: "#ffffff"
@@ -217,6 +222,19 @@ components:
     backgroundColor: transparent
     textColor: "{colors.primary}"
     typography: "{typography.display-lg}"
+  crest-lockup:
+    backgroundColor: "{colors.surface-gold}"
+    textColor: "{colors.primary}"
+    rounded: "{rounded.none}"
+  gold-divider:
+    backgroundColor: "{colors.secondary-gold}"
+    rounded: "{rounded.none}"
+  honor-badge:
+    backgroundColor: "{colors.surface-gold-soft}"
+    textColor: "{colors.on-gold}"
+    typography: "{typography.caption}"
+    rounded: "{rounded.xs}"
+    padding: 6px 12px
   tab-pill:
     backgroundColor: "{colors.canvas-gray}"
     textColor: "{colors.body-muted}"
@@ -262,7 +280,8 @@ The layout grammar is the Korean university portal pattern executed with restrai
 Typography is two-voice: the proprietary **고려대학교체 (Korea University Typeface)** speaks at display sizes — ceremonial, serif-inflected, unmistakably KU — while **Noto Sans KR** carries all body, navigation, and UI text. Korean text dominates; Latin appears in the motto (LIBERTAS · JUSTITIA · VERITAS) and proper nouns only.
 
 **Key Characteristics:**
-- Single crimson accent (`{colors.primary}`) carries every brand and interactive signal; no second hue exists outside photography.
+- Crimson is the primary brand and interactive signal (`{colors.primary}`); Old Gold (`{colors.secondary-gold}`) is the heraldic partner that fills the tiger-crest shield. No third hue exists outside photography.
+- Crimson-and-gold crest palette: the shield reads gold-filled with crimson tiger, border, and lettering — the canonical KU lockup.
 - Rectangular-first shape grammar: buttons, banners, and bands have 0 radius. The square corner reads as "official document."
 - Two-voice typography: 고려대학교체 for ceremonial display, Noto Sans KR for everything functional.
 - Full-bleed photographic heroes of granite campus architecture supply the atmosphere; no decorative gradients.
@@ -280,7 +299,15 @@ Typography is two-voice: the proprietary **고려대학교체 (Korea University 
 - **Deep Crimson** (`{colors.primary-deep}` — #6E0021): Hover/pressed state for crimson fills, and gradient-free darkening for the utility bar (`{colors.surface-crimson-deep}` #5C001B sits one step deeper for the topmost strip).
 - **Bright Crimson** (`{colors.primary-bright}` — #A30734): Used sparingly for hover on crimson text links over white, where the base crimson needs a perceptible lift.
 - **Print Crimson** (`{colors.primary-print}` — #862633): The PANTONE 202C print-conversion hex. Not used on screen; documented so agents don't confuse the two values floating in brand materials.
-- **Ceremonial Gold** (`{colors.accent-gold}` — #B8860B): Reserved strictly for anniversary emblems and award/honor iconography (개교 기념 엠블럼). Never an interactive color. If in doubt, don't use it.
+### Secondary — Heraldic Gold
+The crest is not crimson-on-white; its shield is filled with a muted heraldic gold, with the tiger, border, and "KOREA UNIVERSITY / 1905" lettering in crimson. This gold is the official partner of the crimson and must be reproduced wherever the full-color signature appears.
+- **Old Gold** (`{colors.secondary-gold}` — #B49B57): The shield-fill of the standard tiger-crest signature. The canonical pairing color with crimson. Use for the crest background, gold rule-lines that accompany ceremonial lockups, and honor/achievement framing.
+- **Deep Gold** (`{colors.secondary-gold-deep}` — #8C7539): Shadowed/engraved variant for gold-on-light contrast and pressed states of gold elements.
+- **Bright Gold** (`{colors.secondary-gold-bright}` — #C9B074): Highlight variant for gold detailing on dark surfaces (e.g., crest reversed onto crimson or charcoal).
+- **Gold Soft** (`{colors.surface-gold-soft}` — #F3EEDF): A pale gold tint for honor-badge backgrounds and subtle ceremonial panels where the full Old Gold would be too heavy.
+- **On Gold** (`{colors.on-gold}` — #5C001B): Deep crimson used for text and the tiger mark *on* the gold shield — the crest's internal contrast pair.
+
+> **Usage rule:** Gold is a *heraldic/identity* color, not a general UI accent. It belongs to the crest, ceremonial lockups, honor framing, and gold rule-lines. It is never a button fill, link color, or interactive state — those remain crimson. But it must never be dropped from the full-color signature, which is where earlier single-accent guidance failed.
 
 ### Surface
 - **Pure White** (`{colors.canvas}` — #ffffff): Dominant canvas for content, cards, and the GNB.
@@ -441,6 +468,14 @@ KU's whitespace is institutional calm, not luxury air. Sections breathe at 80px 
 
 **`stat-counter`** — Achievement numbers band (QS 순위, 재학생 수, 교원 수). Number in `{typography.display-lg}` `{colors.primary}` with count-up animation, label below in `{typography.caption}` `{colors.body-muted}`. Sits on `{colors.canvas-warm}`.
 
+### Identity & Crest
+
+**`crest-lockup`** — The full-color tiger-crest signature. Shield filled with `{colors.surface-gold}` (Old Gold #B49B57); tiger illustration, shield border, and "KOREA UNIVERSITY / 1905" lettering in `{colors.primary}` (crimson) — or, where the crest sits on a crimson/charcoal surface, the gold stays gold and the internal marks reverse to `{colors.on-dark}`. This lockup is fixed artwork: never recolor the shield to crimson-only, never flatten the gold. It is the single place gold and crimson always appear together.
+
+**`gold-divider`** — A thin Old Gold rule-line (`{colors.secondary-gold}`, 2px) used only beside ceremonial lockups — the crest, the motto, anniversary headings. It is the gold counterpart to the crimson `{component.section-header}` underline, and it is reserved for identity contexts, never general section titles.
+
+**`honor-badge`** — Small pill/tag for awards, rankings, and 명예 designations (e.g., "QS 세계 OO위", "교육부 선정"). Background `{colors.surface-gold-soft}` (#F3EEDF), text `{colors.on-gold}` (deep crimson) in `{typography.caption}`, rounded `{rounded.xs}`, padding 6px × 12px. The soft-gold field signals honor without competing with crimson CTAs.
+
 ### Inputs & Forms
 
 **`search-input`** — Site search (header drawer and 통합검색 page). Background `{colors.canvas}`, 1px `{colors.hairline-strong}` border that turns 2px `{colors.primary}` on focus, rounded `{rounded.none}`, padding 12px × 16px, height 48px, trailing crimson search-glyph button. Square corners — the search box is a form field, not a pill.
@@ -454,7 +489,9 @@ Validation: error state swaps the border to `{colors.primary-bright}` with a `{t
 ## Do's and Don'ts
 
 ### Do
-- Use `{colors.primary}` (KU Crimson #8B0029) for every brand and interactive signal — CTAs, hovers, section underlines, active states — and nothing else.
+- Use `{colors.primary}` (KU Crimson #8B0029) for every brand and interactive signal — CTAs, hovers, section underlines, active states.
+- Reproduce the crest with its Old Gold shield (`{colors.secondary-gold}` #B49B57) intact — the full-color signature is always gold shield + crimson tiger/lettering, never crimson-only.
+- Use gold (`{colors.secondary-gold}` / `{colors.surface-gold-soft}`) for identity and honor contexts: the crest, ceremonial gold rule-lines, ranking/award badges.
 - Anchor every section title with the 3px crimson underline bar (`{component.section-header}`); it's the system's signature micro-mark.
 - Keep buttons, inputs, and bands at `{rounded.none}` — the square corner is the institutional voice.
 - Set ceremonial display text (hero, crimson band, page titles) in 고려대학교체 at ≥ 36px; everything functional stays Noto Sans KR.
@@ -464,9 +501,10 @@ Validation: error state swaps the border to `{colors.primary-bright}` with a `{t
 - Reserve the hover shadow + lift exclusively for `{component.news-card}`.
 
 ### Don't
-- Don't introduce a second accent color — no blues for links, no greens for success. The crimson family covers all states (use `{colors.primary-bright}` for errors).
+- Don't introduce a *third* color beyond the crimson-and-gold crest palette — no blues for links, no greens for success. The crimson family covers all interactive states (use `{colors.primary-bright}` for errors).
+- Don't use gold as an interactive color — no gold buttons, links, or active states. Gold is heraldic/identity only; interaction is always crimson.
+- Don't drop the gold from the full-color crest or recolor the shield to crimson — that flattening is exactly the error to avoid.
 - Don't round buttons or inputs; `{rounded.pill}` belongs to filter tabs only and `{rounded.circle}` to control chips only.
-- Don't use `{colors.accent-gold}` for anything interactive — it exists solely for ceremonial emblem artwork.
 - Don't set 고려대학교체 below 36px or use it for body/UI text.
 - Don't apply resting shadows to any element; elevation at rest is always flat or hairline.
 - Don't use decorative gradients; the only permitted gradient is the hero legibility scrim.
@@ -518,4 +556,5 @@ Validation: error state swaps the border to `{colors.primary-bright}` with a `{t
 - Form validation patterns beyond the search input were not surfaced; KUPID portal (login-walled) uses a separate legacy design system not covered here.
 - Dark-mode variants do not exist on the analyzed surfaces; the system is light-only.
 - Sejong campus (sejong.korea.ac.kr) shares the token system but runs a different homepage layout; this document describes the Anam main-site grammar.
-- The 120주년 anniversary emblem introduces gold and supplementary graphics governed by a separate ceremonial guideline; `{colors.accent-gold}` here is a placeholder for that artwork, not a verified token.
+- **Old Gold hex is approximate.** KU's official identity regulation specifies only the crimson (PANTONE 202C); the shield's heraldic gold is not published as a standalone color spec. `{colors.secondary-gold}` (#B49B57) is sampled from the standard tiger-crest signature and should be treated as a close working value, not an official token. For exact reproduction, pull the gold directly from the official signature file on the 로고·시그니처·엠블럼 page, or request the value from 대외협력처 커뮤니케이션팀.
+- The 120주년 anniversary emblem introduces additional gold/supplementary graphics governed by a separate ceremonial guideline; the gold tokens here describe the standard signature, not the anniversary artwork.
