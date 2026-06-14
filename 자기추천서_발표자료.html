@@ -113,16 +113,18 @@
   .projx-head{background:var(--primary);color:#fff;padding:11px 16px;}
   .projx-head .wk{display:block;font-size:11.5px;font-weight:500;color:rgba(255,255,255,.85);margin-bottom:2px;}
   .projx-head .nm{font-size:23px;font-weight:800;letter-spacing:-0.5px;}
-  .projx-body{padding:13px 16px 14px;display:flex;flex-direction:column;}
+  .projx-body{padding:13px 16px 14px;display:flex;flex-direction:row;gap:14px;align-items:stretch;}
+  .projx-text{flex:1 1 0;min-width:0;display:flex;flex-direction:column;}
   .projx-def{font-size:14px;font-weight:700;color:var(--ink);line-height:1.55;margin-bottom:9px;}
   .projx-body ul{list-style:none;margin-bottom:11px;}
   .projx-body li{font-size:12.5px;color:var(--body);line-height:1.5;padding-left:13px;position:relative;margin:5px 0;}
   .projx-body li::before{content:"·";position:absolute;left:3px;color:var(--primary);font-weight:700;}
   .projx-body li b{color:var(--ink);}
-  .projx-imgs{display:flex;gap:7px;}
-  .projx-imgs figure{flex:1;height:92px;overflow:hidden;border:1px solid var(--hairline);}
-  .projx-imgs img{width:100%;height:100%;object-fit:cover;display:block;}
-  .projx-link{margin-top:10px;font-size:11.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .projx-shot{flex:0 0 196px;display:flex;}
+  .projx-shot figure{width:100%;min-height:268px;overflow:hidden;border:1px solid var(--hairline);background:var(--gray);
+    display:flex;align-items:center;justify-content:center;}
+  .projx-shot img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block;}
+  .projx-link{margin-top:auto;font-size:11.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .projx-link .lbl{background:var(--primary);color:#fff;font-weight:700;font-size:11px;padding:3px 9px;letter-spacing:-0.2px;white-space:nowrap;}
   .projx-link .url{font-family:'Consolas','D2Coding',monospace;color:var(--primary-deep);
     text-decoration:underline;text-underline-offset:2px;}
@@ -192,6 +194,7 @@
 
   @page{size:13.333in 7.5in;margin:0;}
   @media print{
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     html,body{overflow:visible;background:#fff;width:1280px;height:auto;}
     #nav,#hint,#progress{display:none!important;}
     #stage{position:static;display:block;inset:auto;}
@@ -454,11 +457,21 @@
       <div class="kicker">04 · 학습목표를 위한 노력 · 전략</div>
       <div class="s-title">스터디 준비·진행·개선 &nbsp;·&nbsp; 역할·기준·규칙</div>
       <div class="s-rule"></div>
-      <div class="cols2 grow" style="align-items:start;">
+      <div class="flow-cap" style="margin-bottom:8px;">고정 루틴 — 매주 오프라인으로 모여(3월말~6월, 회당 약 2~5시간) 아래 4단계 순서로 진행</div>
+      <div class="flow" style="margin-bottom:18px;">
+        <div class="fstep" style="padding:10px 10px;"><div class="fn" style="margin-bottom:6px;">1</div><div class="ft">개념 정리</div><div class="fd" style="margin-top:4px;">강의·교과서 정리</div></div>
+        <div class="farrow">→</div>
+        <div class="fstep" style="padding:10px 10px;"><div class="fn" style="margin-bottom:6px;">2</div><div class="ft">코드·웹앱 구현</div><div class="fd" style="margin-top:4px;">동작하는 산출물 제작</div></div>
+        <div class="farrow">→</div>
+        <div class="fstep" style="padding:10px 10px;"><div class="fn" style="margin-bottom:6px;">3</div><div class="ft">실행·검증</div><div class="fd" style="margin-top:4px;">실행·측정으로 확인</div></div>
+        <div class="farrow">→</div>
+        <div class="fstep final" style="padding:10px 10px;"><div class="fn" style="margin-bottom:6px;">4</div><div class="ft">퀴즈·시험 대비</div><div class="fd" style="margin-top:4px;">오답 공유·경향 예측</div></div>
+      </div>
+      <div class="cols2" style="align-items:start;">
         <div class="card" style="height:100%;">
           <span class="tag">준비 · 진행 · 개선</span>
           <ul class="b">
-            <li><b>고정 루틴</b> : 매주 오프라인으로 모여(3월말~6월, 회당 약 2~5시간) 개념 정리 → 코드/웹앱 구현 → 실행·검증 → 퀴즈/시험 대비 순으로 진행</li>
+            <li><b>고정 루틴</b> : 위 4단계(개념 정리 → 구현 → 검증 → 대비)를 <b>매주 반복</b>하며 학습을 누적</li>
             <li><b>이론과 구현의 연결</b> : 매 주차 배운 개념을 반드시 "동작하는 산출물"로 구현(Closest Pair 웹앱, 병렬 히스토그램, 표절검사기, 스케줄러 시뮬레이터 …)</li>
             <li><b>개선</b> : 시험 대비 주차에는 오픈북 특성에 맞춰 교과서 정독·인덱싱 + NotebookLM 예상질문으로 전략을 전환하는 등, 매주 방식을 목표에 맞게 조정</li>
           </ul>
@@ -489,33 +502,31 @@
           <div class="projx">
             <div class="projx-head"><span class="wk">11주차 · 알고리즘 + 생성형 AI</span><span class="nm">Liberal_algorithm</span></div>
             <div class="projx-body">
-              <div class="projx-def">강의에서 배운 알고리즘을 직접 구현하고, 거기에 생성형 AI(LLM)를 결합해 만든 'YouTube 채널 추천' 프로그램</div>
-              <ul>
-                <li>정렬·탐색·그래프 알고리즘으로 채널을 점수화하고 비슷한 취향끼리 묶음</li>
-                <li>그 위에 AI가 <b>추천 이유·페르소나·요약</b>을 사람의 말로 생성</li>
-                <li>정확한 계산은 알고리즘, 자연어 설명은 AI — <b>역할을 나눠</b> 신뢰성 확보</li>
-              </ul>
-              <div class="projx-imgs">
-                <figure><img src="week11/취향%20기반%20추천.png" alt=""></figure>
-                <figure><img src="week11/페르소나.png" alt=""></figure>
+              <div class="projx-text">
+                <div class="projx-def">강의에서 배운 알고리즘을 직접 구현하고, 거기에 생성형 AI(LLM)를 결합해 만든 'YouTube 채널 추천' 프로그램</div>
+                <ul>
+                  <li>정렬·탐색·그래프 알고리즘으로 채널을 점수화하고 비슷한 취향끼리 묶음</li>
+                  <li>그 위에 AI가 <b>추천 이유·페르소나·요약</b>을 사람의 말로 생성</li>
+                  <li>정확한 계산은 알고리즘, 자연어 설명은 AI — <b>역할을 나눠</b> 신뢰성 확보</li>
+                </ul>
+                <div class="projx-link"><span class="lbl">전체 코드·결과물 보기</span><a class="url" href="https://github.com/HANJUSON/Liberal_algorithm" target="_blank" rel="noopener">https://github.com/HANJUSON/Liberal_algorithm</a></div>
               </div>
-              <div class="projx-link"><span class="lbl">전체 코드·결과물 보기</span><a class="url" href="https://github.com/HANJUSON/Liberal_algorithm" target="_blank" rel="noopener">https://github.com/HANJUSON/Liberal_algorithm</a></div>
+              <div class="projx-shot"><figure><img src="week11/로그인%20후.png" alt="Liberal_algorithm 실행 화면"></figure></div>
             </div>
           </div>
           <div class="projx">
             <div class="projx-head"><span class="wk">12주차 · 운영체제(OS)</span><span class="nm">Liberal_OS</span></div>
             <div class="projx-body">
-              <div class="projx-def">컴퓨터를 움직이는 기본 소프트웨어인 운영체제(xv6)를 직접 수정해 만든 'AI를 위한 운영체제'</div>
-              <ul>
-                <li>5개의 AI가 차례로 로그를 분석 — 그 <b>순서·메모리·검증</b>을 운영체제가 직접 통제</li>
-                <li><b>"AI는 제안, 최종 결정은 운영체제"</b> — 틀린 답은 되돌리고 같은 질문은 저장해 재사용</li>
-                <li>교과서로 배우는 운영체제의 핵심 코드(커널)를 학생이 <b>직접 수정</b></li>
-              </ul>
-              <div class="projx-imgs">
-                <figure><img src="week12/screenshot2.png" alt=""></figure>
-                <figure><img src="week12/screenshot3.png" alt=""></figure>
+              <div class="projx-text">
+                <div class="projx-def">컴퓨터를 움직이는 기본 소프트웨어인 운영체제(xv6)를 직접 수정해 만든 'AI를 위한 운영체제'</div>
+                <ul>
+                  <li>5개의 AI가 차례로 로그를 분석 — 그 <b>순서·메모리·검증</b>을 운영체제가 직접 통제</li>
+                  <li><b>"AI는 제안, 최종 결정은 운영체제"</b> — 틀린 답은 되돌리고 같은 질문은 저장해 재사용</li>
+                  <li>교과서로 배우는 운영체제의 핵심 코드(커널)를 학생이 <b>직접 수정</b></li>
+                </ul>
+                <div class="projx-link"><span class="lbl">전체 코드·결과물 보기</span><a class="url" href="https://github.com/HANJUSON/Liberal_OS" target="_blank" rel="noopener">https://github.com/HANJUSON/Liberal_OS</a></div>
               </div>
-              <div class="projx-link"><span class="lbl">전체 코드·결과물 보기</span><a class="url" href="https://github.com/HANJUSON/Liberal_OS" target="_blank" rel="noopener">https://github.com/HANJUSON/Liberal_OS</a></div>
+              <div class="projx-shot"><figure><img src="week12/screenshot3.png" alt="Liberal_OS 실행 화면"></figure></div>
             </div>
           </div>
         </div>
@@ -531,7 +542,7 @@
       <div class="kicker">05 · 활동 소감</div>
       <div class="s-title">잘한 점 · 아쉬운 점 · 성과</div>
       <div class="s-rule"></div>
-      <div class="cols2" style="align-items:start;margin-bottom:16px;">
+      <div class="cols2" style="align-items:stretch;margin-bottom:16px;">
         <div class="card">
           <span class="tag">잘한 점</span>
           <ul class="b small">
